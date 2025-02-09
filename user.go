@@ -26,7 +26,11 @@ func NewUser(name, displayName string) *User {
 
 func randomUint64() uint64 {
 	buf := make([]byte, 8)
+
+	// rand.Read generates random bytes and stores them in 'buf'
 	_, _ = rand.Read(buf)
+
+	// Convert the byte slice into a uint64 number using LittleEndian format
 	return binary.LittleEndian.Uint64(buf)
 }
 
@@ -41,7 +45,12 @@ func (u *User) WebAuthnDisplayName() string {
 
 // WebAuthnID returns the user's id
 func (u *User) WebAuthnID() []byte {
+	// Create a byte slice of size 10 (MaxVarintLen64), enough to hold the largest possible Varint (uint64)
 	buf := make([]byte, binary.MaxVarintLen64)
+
+	// Encode u.id as a Varint and store it in 'buf'
+    // 'PutUvarint' writes the encoded value into the byte slice, 
+    // but the byte slice will have a fixed size (10 bytes).
 	binary.PutUvarint(buf, u.id)
 	return buf
 }

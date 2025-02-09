@@ -26,6 +26,22 @@
         }
       });
 
+      function bufferDecode(value) {
+        // Convert base64url to base64 by replacing "-" with "+" and "_" with "/"
+        value = value.replace(/-/g, "+").replace(/_/g, "/");
+
+        // Add padding if needed
+        while (value.length % 4) {
+          value += "=";
+        }
+        const decoded = atob(value);
+        const array = new Uint8Array(decoded.length);
+        for (let i = 0; i < decoded.length; i++) {
+          array[i] = decoded.charCodeAt(i);
+        }
+        return array;
+      }
+
       function registerUser() {
         const username = document.getElementById("email").value;
         if (!username) {
@@ -35,9 +51,23 @@
 
         fetch(`/register/begin/${username}`)
           .then((res) => res.json())
-          .then((data) => {
-            // const credential = new PublicKeyCredential(data.response);
-            console.log(data);
+          .then((credentialCreationOptions) => {
+            // decode challenge and user id as they are base64url encoded
+            credentialCreationOptions.publicKey.challenge = bufferDecode(
+              credentialCreationOptions.publicKey.challenge
+            );
+            credentialCreationOptions.publicKey.user.id = bufferDecode(
+              credentialCreationOptions.publicKey.user.id
+            );
+
+            // create the credential
+            return navigator.credentials.create({
+              publicKey: credentialCreationOptions.publicKey,
+            });
+          })
+          .then((credential) => {
+            console.log("success");
+            console.log(credential);
           })
           .catch((err) => console.error("Error:", err));
       }

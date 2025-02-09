@@ -67,7 +67,7 @@ func main() {
 	// webauthn config
 	webAuthn, err = webauthn.New(&webauthn.Config{
 		RPDisplayName: "Passkey Demo",
-		RPID: "Passkey Demo",
+		RPID: "localhost",
 		RPOrigins: []string{"localhost"},
 	})
 	if err != nil {
