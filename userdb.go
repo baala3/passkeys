@@ -40,10 +40,3 @@ func (userDB *UserDB) PutUser(user *User) {
 	userDB.users[user.name] = user
 }
 
-// GetUserCount returns the number of users in the database
-func (userDB *UserDB) GetUserCount() int {
-	userDB.mu.RLock()
-	defer userDB.mu.RUnlock()
-	return len(userDB.users)
-}
-
