@@ -1,4 +1,4 @@
-module passkey_demo
+module github.com/baala3/passkey-demo
 
 go 1.23
 

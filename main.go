@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"passkey_demo/controllers"
+	"github.com/baala3/passkey-demo/controllers"
 
 	"github.com/gin-contrib/sessions"
 	gormsessions "github.com/gin-contrib/sessions/gorm"
@@ -29,8 +29,8 @@ func main() {
 	r.Use(sessions.Sessions("mysession", sessionStore))
 
 	// routes
-	r.Static("/static", "./views")
-	r.LoadHTMLGlob("views/html/**")
+	r.Static("/static", "./frontend")
+	r.LoadHTMLGlob("frontend/html/**")
 	r.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "login.html", gin.H{})
 	})
