@@ -157,9 +157,13 @@ func main() {
 	r.Use(sessions.Sessions("mysession", sessionStore))
 
 	// routes
-	r.LoadHTMLGlob("views/*")
+	r.Static("/static", "./views")
+	r.LoadHTMLGlob("views/html/**")
 	r.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", gin.H{})
+		c.HTML(http.StatusOK, "login.html", gin.H{})
+	})
+	r.GET("/home", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "home.html", gin.H{})
 	})
 
 	r.GET("/register/begin/:username", BeginRegistration)

@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <title>Passkey Demo</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
   </head>
   <body>
     <label for="email">Email</label>
@@ -43,7 +44,7 @@
       function registerUser() {
         const username = document.getElementById("email").value;
         if (!username) {
-          alert("Please enter an email address");
+          alert("Please enter your email address");
           return;
         }
 
@@ -97,7 +98,7 @@
       function loginUser() {
         const username = document.getElementById("email").value;
         if (!username) {
-          alert("Please enter an email address");
+          alert("Please enter your email address");
           return;
         }
 

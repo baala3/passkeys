@@ -1,4 +1,4 @@
-module example.com/basic_go
+module passkey_demo
 
 go 1.23
 
