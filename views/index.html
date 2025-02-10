@@ -64,7 +64,7 @@
             });
           })
           .then((credential) => {
-            console.log("success fetching credential");
+            console.log("success fetching navigator.credentials.create()");
             let attestationObject = credential.response.attestationObject;
             let clientDataJSON = credential.response.clientDataJSON;
             let rawId = credential.rawId;
@@ -101,9 +101,26 @@
         fetch(`/login/begin/${username}`)
           .then((res) => res.json())
           .then((credentialRequestOptions) => {
+            credentialRequestOptions.publicKey.challenge = bufferDecode(
+              credentialRequestOptions.publicKey.challenge
+            );
+
+            credentialRequestOptions.publicKey.allowCredentials.forEach(
+              (credential) => {
+                credential.id = bufferDecode(credential.id);
+              }
+            );
+
+            return navigator.credentials.get({
+              publicKey: credentialRequestOptions.publicKey,
+            });
+          })
+          .then((assertion) => {
             // TODO
-            console.log(credentialRequestOptions);
-          });
+            console.log("success fetching navigator.credentials.get()");
+            console.log(assertion);
+          })
+          .catch((err) => console.error("Error:", err));
       }
     </script>
   </body>

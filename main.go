@@ -40,7 +40,7 @@ func BeginRegistration(c *gin.Context) {
 		return
 	}
 
-	// store session data as marshaled JSON
+	// store session data as marshaled JSON byte slice
 	session := sessions.Default(c)
 	bytes, err:= json.Marshal(sessionData)
 
@@ -124,8 +124,8 @@ func BeginLogin(c *gin.Context) {
 		return
 	}
 
+	// store session data as marshaled JSON byte slice
 	session := sessions.Default(c)
-	//json.Marshal() is a Go function that converts (serializes) a Go data structure into a JSON-formatted byte slice
 	bytes, err := json.Marshal(sessionData)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to marshal session data"})
