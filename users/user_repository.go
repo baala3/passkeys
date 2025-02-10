@@ -40,5 +40,5 @@ func (ur *userRepository) PutUser(username string) {
 
 	ur.mu.Lock()
 	defer ur.mu.Unlock()
-	ur.users[user.WebAuthnName()] = user
+	ur.users[user.name] = user
 }
