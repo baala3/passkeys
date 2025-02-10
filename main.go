@@ -50,7 +50,7 @@ func BeginRegistration(c *gin.Context) {
 		return
 	}
 
-	session.Set("registration", bytes)
+	session.Set(username, bytes)
 	err = session.Save()
 	if err != nil {
 		log.Printf("error saving session: %v", err)
@@ -73,7 +73,7 @@ func FinishRegistration(c *gin.Context) {
 	}
 
 	session := sessions.Default(c)
-	sessionData := session.Get("registration")
+	sessionData := session.Get(username)
 	if sessionData == nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "No registration session found. Please start registration first",
@@ -107,6 +107,39 @@ func FinishRegistration(c *gin.Context) {
 	user.AddCredential(*credential)
 
 	c.JSON(http.StatusOK, gin.H{"message": "registration successful"})
+}
+
+func BeginLogin(c *gin.Context) {
+	username := c.Param("username")
+	user, err := userStore.GetUser(username)
+	
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to get user"})
+		return
+	}
+
+	options, sessionData, err := webAuthn.BeginLogin(user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to begin login"})
+		return
+	}
+
+	session := sessions.Default(c)
+	//json.Marshal() is a Go function that converts (serializes) a Go data structure into a JSON-formatted byte slice
+	bytes, err := json.Marshal(sessionData)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to marshal session data"})
+		return
+	}
+
+	session.Set(username, bytes)
+	err = session.Save()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
+		return
+	}
+
+	c.JSON(http.StatusOK, options)
 }
 
 func main() {
@@ -146,6 +179,7 @@ func main() {
 
 	r.GET("/register/begin/:username", BeginRegistration)
 	r.POST("/register/finish/:username", FinishRegistration)
+	r.GET("/login/begin/:username", BeginLogin)
 	fmt.Println("Starting server on port 8080")
 	r.Run(":8080") // listen and serve on 0.0.0.0:8080
 }

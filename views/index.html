@@ -92,7 +92,18 @@
       }
 
       function loginUser() {
-        alert("Login user not implemented yet");
+        const username = document.getElementById("email").value;
+        if (!username) {
+          alert("Please enter an email address");
+          return;
+        }
+
+        fetch(`/login/begin/${username}`)
+          .then((res) => res.json())
+          .then((credentialRequestOptions) => {
+            // TODO
+            console.log(credentialRequestOptions);
+          });
       }
     </script>
   </body>
