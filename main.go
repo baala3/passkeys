@@ -51,11 +51,62 @@ func BeginRegistration(c *gin.Context) {
 	}
 
 	session.Set("registration", bytes)
-
-	log.Printf("registration options: %v", options)
+	err = session.Save()
+	if err != nil {
+		log.Printf("error saving session: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
+		return
+	}
 
 	c.JSON(http.StatusOK, options)
+}
 
+func FinishRegistration(c *gin.Context) {
+	username := c.Param("username")
+
+	user, err := userStore.GetUser(username)
+
+	if err != nil {
+		log.Printf("error getting user: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to get user"})
+		return
+	}
+
+	session := sessions.Default(c)
+	sessionData := session.Get("registration")
+	if sessionData == nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "No registration session found. Please start registration first",
+		})
+		return
+	}
+
+	bytes, ok := sessionData.([]byte)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Invalid session data format",
+		})
+		return
+	}
+
+	var webAuthnSessionData webauthn.SessionData
+	if err := json.Unmarshal(bytes, &webAuthnSessionData); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to parse session data",
+		})
+		return
+	}
+
+	credential, err := webAuthn.FinishRegistration(user, webAuthnSessionData, c.Request)
+	if err != nil {
+		log.Printf("error finishing registration: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to finish registration"})
+		return
+	}
+
+	user.AddCredential(*credential)
+
+	c.JSON(http.StatusOK, gin.H{"message": "registration successful"})
 }
 
 func main() {
@@ -68,7 +119,7 @@ func main() {
 	webAuthn, err = webauthn.New(&webauthn.Config{
 		RPDisplayName: "Passkey Demo",
 		RPID: "localhost",
-		RPOrigins: []string{"localhost"},
+		RPOrigins: []string{"http://localhost:8080"},
 	})
 	if err != nil {
 		panic(err)
@@ -94,7 +145,7 @@ func main() {
 	})
 
 	r.GET("/register/begin/:username", BeginRegistration)
-
+	r.POST("/register/finish/:username", FinishRegistration)
 	fmt.Println("Starting server on port 8080")
 	r.Run(":8080") // listen and serve on 0.0.0.0:8080
 }
