@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -142,6 +141,38 @@ func BeginLogin(c *gin.Context) {
 	c.JSON(http.StatusOK, options)
 }
 
+func FinishLogin(c *gin.Context) {
+	username := c.Param("username")
+
+	user, err := userStore.GetUser(username)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to get user"})
+		return
+	}
+
+	// get session data
+	session := sessions.Default(c)
+	bytes := session.Get(username).([]byte)
+	var sessionData webauthn.SessionData
+	if err := json.Unmarshal(bytes, &sessionData); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse session data"})
+		return
+	}
+
+	// in an actual implementation we should perform additional
+	// checks on the returned 'credential'
+	_, err = webAuthn.FinishLogin(user, sessionData, c.Request)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to finish login"})
+		return
+	}
+
+	// handle successful login
+	c.JSON(http.StatusOK, gin.H{"message": "login successful"})
+}
+	
+	
+
 func main() {
 	var err error
 
@@ -180,6 +211,7 @@ func main() {
 	r.GET("/register/begin/:username", BeginRegistration)
 	r.POST("/register/finish/:username", FinishRegistration)
 	r.GET("/login/begin/:username", BeginLogin)
-	fmt.Println("Starting server on port 8080")
+	r.POST("/login/finish/:username", FinishLogin)
+	log.Println("Starting server on port 8080")
 	r.Run(":8080") // listen and serve on 0.0.0.0:8080
 }

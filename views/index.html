@@ -88,7 +88,10 @@
           .then(() => {
             alert("User registered successfully");
           })
-          .catch((err) => console.error("Error:", err));
+          .catch((err) => {
+            alert("User registered failed");
+            console.error("Error:", err);
+          });
       }
 
       function loginUser() {
@@ -116,11 +119,38 @@
             });
           })
           .then((assertion) => {
-            // TODO
-            console.log("success fetching navigator.credentials.get()");
-            console.log(assertion);
+            let authData = assertion.response.authenticatorData;
+            let clientDataJSON = assertion.response.clientDataJSON;
+            let rawId = assertion.rawId;
+            let sig = assertion.response.signature;
+            let userHandle = assertion.response.userHandle;
+
+            fetch(`/login/finish/${username}`, {
+              method: "POST",
+              body: JSON.stringify({
+                id: assertion.id,
+                rawID: bufferEncode(rawId),
+                type: assertion.type,
+                response: {
+                  authenticatorData: bufferEncode(authData),
+                  clientDataJSON: bufferEncode(clientDataJSON),
+                  signature: bufferEncode(sig),
+                  userHandle: bufferEncode(userHandle),
+                },
+              }),
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
           })
-          .catch((err) => console.error("Error:", err));
+          .then(() => {
+            console.log("User logged in successfully");
+            alert("User logged in successfully");
+          })
+          .catch((err) => {
+            console.error("Error:", err);
+            alert("User logged in failed");
+          });
       }
     </script>
   </body>
