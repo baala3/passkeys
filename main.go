@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/baala3/passkey-demo/controllers"
+	"github.com/baala3/passkey-demo/webauthn"
 
 	"github.com/gin-contrib/sessions"
 	gormsessions "github.com/gin-contrib/sessions/gorm"
@@ -39,7 +39,7 @@ func main() {
 	})
 
 	// webauthn config
-	wc := controllers.NewWebAuthnController()
+	wc := webauthn.NewWebAuthnController()
 	r.GET("/register/begin/:username", wc.BeginRegistration)
 	r.POST("/register/finish/:username", wc.FinishRegistration)
 	r.GET("/login/begin/:username", wc.BeginLogin)

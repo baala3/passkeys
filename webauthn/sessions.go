@@ -1,4 +1,4 @@
-package controllers
+package webauthn
 
 import (
 	"encoding/json"
