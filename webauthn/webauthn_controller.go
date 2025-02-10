@@ -21,7 +21,7 @@ type webAuthnController struct {
 	userStore users.UserRepository
 }
 
-func NewWebAuthnController() webAuthnController {
+func NewWebAuthnController() *webAuthnController {
 	webAuthn, err := webauthn.New(&webauthn.Config{
 		RPDisplayName: "Passkey Demo",
 		RPID: "localhost",
@@ -31,7 +31,7 @@ func NewWebAuthnController() webAuthnController {
 		log.Fatalf("error creating webauthn: %v", err)
 	}
 
-	return webAuthnController{
+	return &webAuthnController{
 		webAuthn: webAuthn,
 		userStore: users.NewUserRepository(), // TODO: use DB
 	}
@@ -67,7 +67,6 @@ func (wc *webAuthnController) FinishRegistration(c *gin.Context) {
 	username := c.Param("username")
 
 	user, err := wc.userStore.GetUser(username)
-	log.Printf("user: %v", user)
 
 	if err != nil {
 		log.Printf("error getting user: %v", err)
@@ -76,7 +75,6 @@ func (wc *webAuthnController) FinishRegistration(c *gin.Context) {
 	}
 
 	sessionData, err := LoadSessionData(c, username)
-	log.Printf("sessionData: %v", sessionData)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -88,8 +86,6 @@ func (wc *webAuthnController) FinishRegistration(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to finish registration: " + err.Error()})
 		return
 	}
-
-	log.Printf("credential: %v", credential)
 
 	user.AddCredential(*credential)
 
