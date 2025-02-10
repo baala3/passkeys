@@ -119,6 +119,7 @@
             });
           })
           .then((assertion) => {
+            console.log("success fetching navigator.credentials.get()");
             let authData = assertion.response.authenticatorData;
             let clientDataJSON = assertion.response.clientDataJSON;
             let rawId = assertion.rawId;

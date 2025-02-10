@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 	"strings"
@@ -39,21 +38,8 @@ func BeginRegistration(c *gin.Context) {
 		return
 	}
 
-	// store session data as marshaled JSON byte slice
-	session := sessions.Default(c)
-	bytes, err:= json.Marshal(sessionData)
-
-	if err != nil {
-		log.Printf("error marshaling session data: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session data"})
-		return
-	}
-
-	session.Set(username, bytes)
-	err = session.Save()
-	if err != nil {
-		log.Printf("error saving session: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
+	if err := StoreSessionData(c, username, sessionData); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -71,35 +57,16 @@ func FinishRegistration(c *gin.Context) {
 		return
 	}
 
-	session := sessions.Default(c)
-	sessionData := session.Get(username)
-	if sessionData == nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "No registration session found. Please start registration first",
-		})
+	sessionData, err := LoadSessionData(c, username)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	bytes, ok := sessionData.([]byte)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Invalid session data format",
-		})
-		return
-	}
-
-	var webAuthnSessionData webauthn.SessionData
-	if err := json.Unmarshal(bytes, &webAuthnSessionData); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to parse session data",
-		})
-		return
-	}
-
-	credential, err := webAuthn.FinishRegistration(user, webAuthnSessionData, c.Request)
+	credential, err := webAuthn.FinishRegistration(user, *sessionData, c.Request)
 	if err != nil {
 		log.Printf("error finishing registration: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to finish registration"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to finish registration: " + err.Error()})
 		return
 	}
 
@@ -123,18 +90,8 @@ func BeginLogin(c *gin.Context) {
 		return
 	}
 
-	// store session data as marshaled JSON byte slice
-	session := sessions.Default(c)
-	bytes, err := json.Marshal(sessionData)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to marshal session data"})
-		return
-	}
-
-	session.Set(username, bytes)
-	err = session.Save()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
+	if err := StoreSessionData(c, username, sessionData); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -150,20 +107,17 @@ func FinishLogin(c *gin.Context) {
 		return
 	}
 
-	// get session data
-	session := sessions.Default(c)
-	bytes := session.Get(username).([]byte)
-	var sessionData webauthn.SessionData
-	if err := json.Unmarshal(bytes, &sessionData); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse session data"})
+	sessionData, err := LoadSessionData(c, username)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	// in an actual implementation we should perform additional
 	// checks on the returned 'credential'
-	_, err = webAuthn.FinishLogin(user, sessionData, c.Request)
+	_, err = webAuthn.FinishLogin(user, *sessionData, c.Request)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to finish login"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to finish login: " + err.Error()})
 		return
 	}
 
