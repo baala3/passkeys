@@ -10,20 +10,8 @@ import (
 )
 
 type WebAuthnController struct {
-	webAuthnAPI *webauthn.WebAuthn
+	WebAuthnAPI *webauthn.WebAuthn
 	UserStore users.UserRepository
-}
-
-func NewWebAuthnController() *WebAuthnController {
-	webAuthnAPI, err := NewWebAuthnAPI()
-	if err != nil {
-		log.Fatalf("error creating webauthn: %v", err)
-	}
-
-	return &WebAuthnController{
-		webAuthnAPI: webAuthnAPI,
-		UserStore: users.NewUserRepository(), // TODO: use DB
-	}
 }
 
 func (wc *WebAuthnController) BeginRegistration(c *gin.Context) {
@@ -36,7 +24,7 @@ func (wc *WebAuthnController) BeginRegistration(c *gin.Context) {
 	}
 
 	// generate PublicKeyCredentialCreationOptions, session data
-	options, sessionData, err := wc.webAuthnAPI.BeginRegistration(user)
+	options, sessionData, err := wc.WebAuthnAPI.BeginRegistration(user)
 
 	if err!=nil{
 		log.Printf("error beginning registration: %v", err)
@@ -69,7 +57,7 @@ func (wc *WebAuthnController) FinishRegistration(c *gin.Context) {
 		return
 	}
 
-	credential, err := wc.webAuthnAPI.FinishRegistration(user, *sessionData, c.Request)
+	credential, err := wc.WebAuthnAPI.FinishRegistration(user, *sessionData, c.Request)
 	if err != nil {
 		log.Printf("error finishing registration: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to finish registration: " + err.Error()})
@@ -90,7 +78,7 @@ func (wc *WebAuthnController) BeginLogin(c *gin.Context) {
 		return
 	}
 
-	options, sessionData, err := wc.webAuthnAPI.BeginLogin(user)
+	options, sessionData, err := wc.WebAuthnAPI.BeginLogin(user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to begin login"})
 		return
@@ -121,7 +109,7 @@ func (wc *WebAuthnController) FinishLogin(c *gin.Context) {
 
 	// in an actual implementation we should perform additional
 	// checks on the returned 'credential'
-	_, err = wc.webAuthnAPI.FinishLogin(user, *sessionData, c.Request)
+	_, err = wc.WebAuthnAPI.FinishLogin(user, *sessionData, c.Request)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to finish login: " + err.Error()})
 		return

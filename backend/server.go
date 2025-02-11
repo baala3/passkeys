@@ -14,14 +14,7 @@ import (
 
 type Server struct {
 	router *gin.Engine
-	webauthnController *auth.WebAuthnController
-}
-
-func NewServer() *Server {
-	return &Server{
-		router: gin.Default(),
-		webauthnController: auth.NewWebAuthnController(),
-	}
+	webauthnController auth.WebAuthnController
 }
 
 func (s *Server) Start() {
