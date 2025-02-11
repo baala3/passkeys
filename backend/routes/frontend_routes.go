@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 func SetupFrontendRoutes(r *gin.Engine) {
-	r.Static("/static", "./frontend")
-	r.LoadHTMLGlob("frontend/html/*")
+	r.Static("/static", "../frontend")
+	r.LoadHTMLGlob("../frontend/html/*")
 	r.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "login.html", gin.H{})
 	})

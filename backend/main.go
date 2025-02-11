@@ -19,7 +19,7 @@ func main() {
 	r := gin.Default()
 
 	// db
-	db, err := gorm.Open(sqlite.Open("db/test.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("./db/test.db"), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
