@@ -1,4 +1,4 @@
-package webauthn
+package auth
 
 import (
 	"log"
@@ -9,45 +9,34 @@ import (
 	"github.com/go-webauthn/webauthn/webauthn"
 )
 
-type WebAuthnController interface {
-	BeginRegistration(c *gin.Context)
-	FinishRegistration(c *gin.Context)
-	BeginLogin(c *gin.Context)
-	FinishLogin(c *gin.Context)
+type WebAuthnController struct {
+	webAuthnAPI *webauthn.WebAuthn
+	UserStore users.UserRepository
 }
 
-type webAuthnController struct {
-	webAuthn *webauthn.WebAuthn
-	userStore users.UserRepository
-}
-
-func NewWebAuthnController() *webAuthnController {
-	webAuthn, err := webauthn.New(&webauthn.Config{
-		RPDisplayName: "Passkey Demo",
-		RPID: "localhost",
-		RPOrigins: []string{"http://localhost:8080"},
-	})
+func NewWebAuthnController() *WebAuthnController {
+	webAuthnAPI, err := NewWebAuthnAPI()
 	if err != nil {
 		log.Fatalf("error creating webauthn: %v", err)
 	}
 
-	return &webAuthnController{
-		webAuthn: webAuthn,
-		userStore: users.NewUserRepository(), // TODO: use DB
+	return &WebAuthnController{
+		webAuthnAPI: webAuthnAPI,
+		UserStore: users.NewUserRepository(), // TODO: use DB
 	}
 }
 
-func (wc *webAuthnController) BeginRegistration(c *gin.Context) {
+func (wc *WebAuthnController) BeginRegistration(c *gin.Context) {
 	username := c.Param("username")
 
-	user, err := wc.userStore.GetUser(username)
+	user, err := wc.UserStore.GetUser(username)
 
 	if err != nil {
-		wc.userStore.PutUser(username)
+		wc.UserStore.PutUser(username)
 	}
 
 	// generate PublicKeyCredentialCreationOptions, session data
-	options, sessionData, err := wc.webAuthn.BeginRegistration(user)
+	options, sessionData, err := wc.webAuthnAPI.BeginRegistration(user)
 
 	if err!=nil{
 		log.Printf("error beginning registration: %v", err)
@@ -63,10 +52,10 @@ func (wc *webAuthnController) BeginRegistration(c *gin.Context) {
 	c.JSON(http.StatusOK, options)
 }
 
-func (wc *webAuthnController) FinishRegistration(c *gin.Context) {
+func (wc *WebAuthnController) FinishRegistration(c *gin.Context) {
 	username := c.Param("username")
 
-	user, err := wc.userStore.GetUser(username)
+	user, err := wc.UserStore.GetUser(username)
 
 	if err != nil {
 		log.Printf("error getting user: %v", err)
@@ -80,7 +69,7 @@ func (wc *webAuthnController) FinishRegistration(c *gin.Context) {
 		return
 	}
 
-	credential, err := wc.webAuthn.FinishRegistration(user, *sessionData, c.Request)
+	credential, err := wc.webAuthnAPI.FinishRegistration(user, *sessionData, c.Request)
 	if err != nil {
 		log.Printf("error finishing registration: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to finish registration: " + err.Error()})
@@ -92,16 +81,16 @@ func (wc *webAuthnController) FinishRegistration(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "registration successful"})
 }
 
-func (wc *webAuthnController) BeginLogin(c *gin.Context) {
+func (wc *WebAuthnController) BeginLogin(c *gin.Context) {
 	username := c.Param("username")
-	user, err := wc.userStore.GetUser(username)
+	user, err := wc.UserStore.GetUser(username)
 	
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to get user"})
 		return
 	}
 
-	options, sessionData, err := wc.webAuthn.BeginLogin(user)
+	options, sessionData, err := wc.webAuthnAPI.BeginLogin(user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to begin login"})
 		return
@@ -115,10 +104,10 @@ func (wc *webAuthnController) BeginLogin(c *gin.Context) {
 	c.JSON(http.StatusOK, options)
 }
 
-func (wc *webAuthnController) FinishLogin(c *gin.Context) {
+func (wc *WebAuthnController) FinishLogin(c *gin.Context) {
 	username := c.Param("username")
 
-	user, err := wc.userStore.GetUser(username)
+	user, err := wc.UserStore.GetUser(username)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to get user"})
 		return
@@ -132,7 +121,7 @@ func (wc *webAuthnController) FinishLogin(c *gin.Context) {
 
 	// in an actual implementation we should perform additional
 	// checks on the returned 'credential'
-	_, err = wc.webAuthn.FinishLogin(user, *sessionData, c.Request)
+	_, err = wc.webAuthnAPI.FinishLogin(user, *sessionData, c.Request)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to finish login: " + err.Error()})
 		return

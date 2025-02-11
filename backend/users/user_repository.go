@@ -6,24 +6,20 @@ import (
 	"sync"
 )
 
-type UserRepository interface {
-	GetUser(name string) (*User, error)
-	PutUser(username string)
-}
-
-type userRepository struct {
+type UserRepository struct {
 	users map[string]*User
-	mu sync.RWMutex
+	mu *sync.RWMutex
 }
 
 func NewUserRepository() UserRepository {
-	return &userRepository{
+	return UserRepository{
 		users: make(map[string]*User),
+		mu: &sync.RWMutex{},
 	}
 }
 
 // GetUser returns a user by name
-func (ur *userRepository) GetUser(name string) (*User, error) {
+func (ur *UserRepository) GetUser(name string) (*User, error) {
 	ur.mu.RLock()
 	defer ur.mu.RUnlock()
 	user, ok := ur.users[name]
@@ -34,7 +30,7 @@ func (ur *userRepository) GetUser(name string) (*User, error) {
 }
 
 // PutUser adds or updates a user in the database
-func (ur *userRepository) PutUser(username string) {
+func (ur *UserRepository) PutUser(username string) {
 	displayName := strings.Split(username, "@")[0]
 	user := NewUser(username, displayName)
 

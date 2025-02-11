@@ -1,4 +1,4 @@
-package webauthn
+package auth
 
 import (
 	"encoding/json"

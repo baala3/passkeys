@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/baala3/passkey-demo/webauthn"
+	"github.com/baala3/passkey-demo/auth"
 	"github.com/gin-contrib/sessions"
 	gormsessions "github.com/gin-contrib/sessions/gorm"
 	"github.com/gin-gonic/gin"
@@ -14,13 +14,13 @@ import (
 
 type Server struct {
 	router *gin.Engine
-	webauthnController webauthn.WebAuthnController
+	webauthnController *auth.WebAuthnController
 }
 
 func NewServer() *Server {
 	return &Server{
 		router: gin.Default(),
-		webauthnController: webauthn.NewWebAuthnController(),
+		webauthnController: auth.NewWebAuthnController(),
 	}
 }
 
