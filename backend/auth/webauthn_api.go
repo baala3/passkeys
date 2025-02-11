@@ -1,12 +1,16 @@
 package auth
 
-import "github.com/go-webauthn/webauthn/webauthn"
+import (
+	"os"
+
+	"github.com/go-webauthn/webauthn/webauthn"
+)
 
 func NewWebAuthnAPI() (*webauthn.WebAuthn, error) {
 	webauthn, err := webauthn.New(&webauthn.Config{
-		RPDisplayName: "Passkey Demo",
-		RPID: "localhost",
-		RPOrigins: []string{"http://localhost:8080"},
+		RPDisplayName: os.Getenv("RP_DISPLAY_NAME"),
+		RPID: os.Getenv("RP_ID"),
+		RPOrigins: []string{os.Getenv("RP_ORIGIN")},
 	})
 	return webauthn, err
 }

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/baala3/passkey-demo/auth"
 	"github.com/gin-contrib/sessions"
@@ -18,14 +20,14 @@ type Server struct {
 }
 
 func (s *Server) Start() {
-	db, err := gorm.Open(sqlite.Open("./db/test.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(fmt.Sprintf("./db/%s.db", os.Getenv("DB_NAME"))), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
 
 	//session store
-	sessionStore := gormsessions.NewStore(db, true, []byte("secret"))
-	s.router.Use(sessions.Sessions("mysession", sessionStore))
+	sessionStore := gormsessions.NewStore(db, true, []byte(os.Getenv("SESSION_SECRET")))
+	s.router.Use(sessions.Sessions(os.Getenv("SESSION_NAME"), sessionStore))
 
 	//routes
 	s.registerEndpoints()
