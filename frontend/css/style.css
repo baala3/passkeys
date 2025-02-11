@@ -31,3 +31,14 @@ button {
 button:hover {
   background-color: #45a049;
 }
+
+.header {
+  background-color: #222;
+  color: white;
+  text-align: center;
+  padding: 10px 0;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
