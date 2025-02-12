@@ -20,7 +20,7 @@ func NewUser(name, displayName string) *User {
 		id: randomUint64(),
 		name: name,
 		displayName: displayName,
-		// user.credentials = []webauthn.Credential{}
+		credentials: []webauthn.Credential{},
 	}
 }
 

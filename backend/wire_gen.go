@@ -9,15 +9,13 @@ package main
 import (
 	"github.com/baala3/passkey-demo/auth"
 	"github.com/baala3/passkey-demo/users"
-	"github.com/gin-gonic/gin"
-	"github.com/google/wire"
+	"github.com/labstack/echo/v4"
 )
 
 // Injectors from wire.go:
 
 func NewServer() (*Server, error) {
-	v := provideGinOptions()
-	engine := gin.Default(v...)
+	echoEcho := echo.New()
 	webAuthn, err := auth.NewWebAuthnAPI()
 	if err != nil {
 		return nil, err
@@ -28,16 +26,8 @@ func NewServer() (*Server, error) {
 		UserStore:   userRepository,
 	}
 	server := &Server{
-		router:             engine,
+		router:             echoEcho,
 		webauthnController: webAuthnController,
 	}
 	return server, nil
 }
-
-// wire.go:
-
-func provideGinOptions() []gin.OptionFunc {
-	return []gin.OptionFunc{}
-}
-
-var engineSet = wire.NewSet(gin.Default, provideGinOptions)

@@ -6,23 +6,14 @@ package main
 import (
 	auth "github.com/baala3/passkey-demo/auth"
 	"github.com/baala3/passkey-demo/users"
-	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
-)
-
-func provideGinOptions() []gin.OptionFunc {
-	return []gin.OptionFunc{}
-}
-
-var engineSet = wire.NewSet(
-	gin.Default,
-	provideGinOptions,
+	"github.com/labstack/echo/v4"
 )
 
 func NewServer() (*Server, error) {
 	panic(wire.Build(
 		wire.Struct(new(Server), "*"),
-		engineSet,
+		echo.New,
 		wire.Struct(new(auth.WebAuthnController), "*"),
 		users.NewUserRepository,
 		auth.NewWebAuthnAPI,
