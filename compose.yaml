@@ -1,0 +1,19 @@
+version: "3.8"
+services:
+  redis:
+    image: redis:latest
+    ports:
+      - 16379:6379
+  postgres:
+    image: postgres:latest
+    ports:
+      - 15432:5432
+    volumes:
+      - postgres:/var/lib/postgresql/data
+      - ./db/postgres:/docker-entrypoint-initdb.d
+    environment:
+      POSTGRES_PASSWORD: password
+
+volumes:
+  postgres:
+    driver: local
