@@ -36,8 +36,8 @@ func (s *Server) Start() {
 }
 
 func (s *Server) registerEndpoints() {
-	s.router.Static("/static", "../frontend")
-	s.router.LoadHTMLGlob("../frontend/html/*")
+	s.router.Static("/static", "web")
+	s.router.LoadHTMLGlob("web/*")
 	s.router.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "login.html", gin.H{})
 	})
