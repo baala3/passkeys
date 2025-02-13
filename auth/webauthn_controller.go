@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/baala3/passkey-demo/users"
+	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/labstack/echo/v4"
 )
@@ -35,8 +36,14 @@ func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 		}
 	}
 
+	authSelect := protocol.AuthenticatorSelection{
+		RequireResidentKey: protocol.ResidentKeyRequired(),
+		ResidentKey:        protocol.ResidentKeyRequirementRequired,
+	}
+
 	// generate PublicKeyCredentialCreationOptions, session data
 	options, sessionData, err := wc.WebAuthnAPI.BeginRegistration(user,
+		webauthn.WithAuthenticatorSelection(authSelect),
 		webauthn.WithExclusions(user.CredentialExcludeList()))
 
 	if err != nil{
