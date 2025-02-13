@@ -35,7 +35,12 @@
           optionsJSON: credentialCreationOptions.publicKey,
         });
       } catch (err) {
-        throw err;
+        if (err.name === "InvalidStateError") {
+          showNotification("User already exists");
+        } else {
+          showNotification("Registration canceled or Failed due to an error.");
+        }
+        return;
       }
 
       const verificationResponse = await fetch(`/register/finish/${username}`, {

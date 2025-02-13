@@ -135,6 +135,13 @@ func (wc *WebAuthnController) BeginLogin() echo.HandlerFunc {
 		})
 	}
 
+	if user == nil {
+		return ctx.JSON(http.StatusBadRequest, FIDO2Response{
+			Status:       "error",
+			ErrorMessage: "User does not exist",
+		})
+	}
+
 	options, sessionData, err := wc.WebAuthnAPI.BeginLogin(user)
 	if err != nil {
 		ctx.Logger().Error("error webauthnAPI.BeginLogin() %v", err)

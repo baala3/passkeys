@@ -41,7 +41,12 @@
           optionsJSON: credentialRequestOptions.publicKey,
         });
       } catch (err) {
-        throw err;
+        if (err.name === "TypeError") {
+          showNotification("User does not exist");
+        } else {
+          showNotification("Login canceled or Failed due to an error.");
+        }
+        return;
       }
 
       const verificationResponse = await fetch(`/login/finish/${username}`, {
