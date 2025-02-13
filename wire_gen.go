@@ -8,6 +8,7 @@ package main
 
 import (
 	"github.com/baala3/passkey-demo/auth"
+	"github.com/baala3/passkey-demo/db"
 	"github.com/baala3/passkey-demo/users"
 	"github.com/labstack/echo/v4"
 )
@@ -20,7 +21,10 @@ func NewServer() (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	userRepository := users.NewUserRepository()
+	bunDB := db.GetDB()
+	userRepository := users.UserRepository{
+		DB: bunDB,
+	}
 	webAuthnController := auth.WebAuthnController{
 		WebAuthnAPI: webAuthn,
 		UserStore:   userRepository,

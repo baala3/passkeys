@@ -1,3 +1,2 @@
-db/*
-backend/db/*
+local/postgres/data
 .DS_Store

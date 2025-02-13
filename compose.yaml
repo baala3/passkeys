@@ -9,11 +9,7 @@ services:
     ports:
       - 15432:5432
     volumes:
-      - postgres:/var/lib/postgresql/data
-      - ./db/postgres:/docker-entrypoint-initdb.d
+      - ./local/postgres/data/:/var/lib/postgresql/data
+      - ./local/postgres/:/docker-entrypoint-initdb.d # make sure to remove all volumes files ex: rm -rf ./local/postgres/data to trigger this
     environment:
-      POSTGRES_PASSWORD: password
-
-volumes:
-  postgres:
-    driver: local
+      POSTGRES_PASSWORD: mypassword

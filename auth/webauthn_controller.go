@@ -17,17 +17,21 @@ func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 	return func(ctx echo.Context) error {	
 		username := ctx.Param("username")
 
-	user, err := wc.UserStore.GetUser(username)
+	user, err := wc.UserStore.FindUserByName(ctx.Request().Context(), username)
 
 	if err != nil {
-		wc.UserStore.PutUser(username)
+		user, err = wc.UserStore.CreateUser(ctx.Request().Context(), username)
+		if err != nil {
+			ctx.Logger().Error("error CreateUser() %v", err)
+			return ctx.JSON(http.StatusInternalServerError, err.Error())
+		}
 	}
 
 	// generate PublicKeyCredentialCreationOptions, session data
 	options, sessionData, err := wc.WebAuthnAPI.BeginRegistration(user)
 
 	if err!=nil{
-		ctx.Logger().Error("error BeginRegistration() %v", err)
+		ctx.Logger().Error("error webauthnAPI.BeginRegistration() %v", err)
 		return ctx.JSON(http.StatusInternalServerError, err.Error())
 	}
 
@@ -42,12 +46,12 @@ func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 
 func (wc *WebAuthnController) FinishRegistration() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		username := ctx.Param("username")
+	username := ctx.Param("username")
 
-	user, err := wc.UserStore.GetUser(username)
+	user, err := wc.UserStore.FindUserByName(ctx.Request().Context(), username)
 
 	if err != nil {
-		ctx.Logger().Error("error GetUser() %v", err)
+		ctx.Logger().Error("error FindUserByName() %v", err)
 		return ctx.JSON(http.StatusBadRequest, err.Error())
 	}
 
@@ -63,7 +67,10 @@ func (wc *WebAuthnController) FinishRegistration() echo.HandlerFunc {
 		return ctx.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	user.AddCredential(*credential)
+	if err := wc.UserStore.AddWebauthnCredential(ctx.Request().Context(), user.ID, credential); err != nil {
+		ctx.Logger().Error("error AddWebauthnCredential() %v", err)
+		return ctx.JSON(http.StatusInternalServerError, err.Error())
+	}
 
 	return ctx.JSON(http.StatusOK, nil)
 }
@@ -71,17 +78,17 @@ func (wc *WebAuthnController) FinishRegistration() echo.HandlerFunc {
 
 func (wc *WebAuthnController) BeginLogin() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		username := ctx.Param("username")
-	 user, err := wc.UserStore.GetUser(username)
+	username := ctx.Param("username")
+	user, err := wc.UserStore.FindUserByName(ctx.Request().Context(), username)
 	
 	if err != nil {
-		ctx.Logger().Error("error GetUser() %v", err)
+		ctx.Logger().Error("error FindUserByName() %v", err)
 		return ctx.JSON(http.StatusBadRequest, err.Error())
 	}
 
 	options, sessionData, err := wc.WebAuthnAPI.BeginLogin(user)
 	if err != nil {
-		ctx.Logger().Error("error BeginLogin() %v", err)
+		ctx.Logger().Error("error webauthnAPI.BeginLogin() %v", err)
 		return ctx.JSON(http.StatusInternalServerError, err.Error())
 	}
 
@@ -98,9 +105,9 @@ func (wc *WebAuthnController) FinishLogin() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		username := ctx.Param("username")
 
-	user, err := wc.UserStore.GetUser(username)
+	user, err := wc.UserStore.FindUserByName(ctx.Request().Context(), username)
 	if err != nil {
-		ctx.Logger().Error("error GetUser() %v", err)
+		ctx.Logger().Error("error FindUserByName() %v", err)
 		return ctx.JSON(http.StatusBadRequest, err.Error())
 	}
 
@@ -114,7 +121,7 @@ func (wc *WebAuthnController) FinishLogin() echo.HandlerFunc {
 	// checks on the returned 'credential'
 	_, err = wc.WebAuthnAPI.FinishLogin(user, *sessionData, ctx.Request())
 	if err != nil {
-		ctx.Logger().Error("error FinishLogin() %v", err)
+		ctx.Logger().Error("error webauthnAPI.FinishLogin() %v", err)
 		return ctx.JSON(http.StatusBadRequest, err.Error())
 	}
 
