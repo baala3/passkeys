@@ -143,5 +143,5 @@ function showNotification(message) {
   document.getElementById("notification").innerHTML = message;
   setTimeout(() => {
     document.getElementById("notification").innerHTML = "";
-  }, 3000);
+  }, 5000);
 }

@@ -42,6 +42,13 @@ button:hover {
   left: 0;
 }
 
+.link {
+  text-decoration: none;
+}
+.link:hover {
+  text-decoration: underline;
+}
+
 #notification {
   padding: 10px;
   margin: 15px;
