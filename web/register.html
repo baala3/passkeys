@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <title>PassKey Demo</title>
     <link rel="stylesheet" type="text/css" href="/static/style.css" />
-    <script src="/static/webauth.js"></script>
+    <script src="/static/common.js"></script>
   </head>
   <body>
     <div class="header">
@@ -15,4 +15,61 @@
     <button onclick="registerUser()">Register</button>
     <a href="/login">Already have an account?</a>
   </body>
+  <script>
+    // register a new user
+    function registerUser() {
+      const username = document.getElementById("username").value;
+      if (!username) {
+        showNotification("Please enter your username");
+        return;
+      }
+
+      fetch(`/register/begin/${username}`)
+        .then((res) => res.json())
+        .then((credentialCreationOptions) => {
+          // decode challenge and user id as they are base64url encoded
+          credentialCreationOptions.publicKey.challenge = bufferDecode(
+            credentialCreationOptions.publicKey.challenge
+          );
+          credentialCreationOptions.publicKey.user.id = bufferDecode(
+            credentialCreationOptions.publicKey.user.id
+          );
+
+          // create the credential
+          return navigator.credentials.create({
+            publicKey: credentialCreationOptions.publicKey,
+          });
+        })
+        .then((credential) => {
+          console.log("success fetching navigator.credentials.create()");
+          let attestationObject = credential.response.attestationObject;
+          let clientDataJSON = credential.response.clientDataJSON;
+          let rawId = credential.rawId;
+
+          fetch(`/register/finish/${username}`, {
+            method: "POST",
+            body: JSON.stringify({
+              id: credential.id,
+              rawID: bufferEncode(rawId),
+              type: credential.type,
+              response: {
+                attestationObject: bufferEncode(attestationObject),
+                clientDataJSON: bufferEncode(clientDataJSON),
+              },
+            }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+        })
+        .then(() => {
+          console.log("passkey registered successfully");
+          showNotification("Successfully registered.");
+        })
+        .catch((err) => {
+          console.error("Error:", err);
+          showNotification("Registration failed.");
+        });
+    }
+  </script>
 </html>
