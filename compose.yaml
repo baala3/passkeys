@@ -9,7 +9,8 @@ services:
     ports:
       - 15432:5432
     volumes:
-      - ./local/postgres/data/:/var/lib/postgresql/data
-      - ./local/postgres/:/docker-entrypoint-initdb.d # make sure to remove all volumes files ex: rm -rf ./local/postgres/data to trigger this
+      - ./server/db/data/:/var/lib/postgresql/data
     environment:
+      POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydb

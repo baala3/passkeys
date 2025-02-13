@@ -115,6 +115,13 @@ func (wc *WebAuthnController) FinishRegistration() echo.HandlerFunc {
 		})
 	}
 
+	if !credential.Flags.UserPresent || !credential.Flags.UserVerified {
+		return ctx.JSON(http.StatusBadRequest, FIDO2Response{
+			Status:       "error",
+			ErrorMessage: "User not present or not verified",
+		})
+	}
+
 	if err := wc.UserStore.AddWebauthnCredential(ctx.Request().Context(), user.ID, credential); err != nil {
 		ctx.Logger().Error("error AddWebauthnCredential() %v", err)
 		return ctx.JSON(http.StatusInternalServerError, FIDO2Response{
@@ -210,14 +217,25 @@ func (wc *WebAuthnController) FinishLogin() echo.HandlerFunc {
 		})
 	}
 
-	// in an actual implementation we should perform additional
-	// checks on the returned 'credential'
-	_, err = wc.WebAuthnAPI.FinishLogin(user, *sessionData, ctx.Request())
+	credential, err := wc.WebAuthnAPI.FinishLogin(user, *sessionData, ctx.Request())
 	if err != nil {
 		ctx.Logger().Error("error webauthnAPI.FinishLogin() %v", err)
 		return ctx.JSON(http.StatusBadRequest, FIDO2Response{
 			Status:       "error",
 			ErrorMessage: err.Error(),
+		})
+	}
+
+	if !credential.Flags.UserPresent || !credential.Flags.UserVerified {
+		return ctx.JSON(http.StatusBadRequest, FIDO2Response{
+			Status:       "error",
+			ErrorMessage: "User not present or not verified",
+		})
+	}
+	if credential.Authenticator.CloneWarning {
+		return ctx.JSON(http.StatusBadRequest, FIDO2Response{
+			Status:       "error",
+			ErrorMessage: "Authenticator is cloned",
 		})
 	}
 

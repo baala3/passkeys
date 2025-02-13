@@ -1,2 +1,2 @@
-local/postgres/data
+server/db/data
 .DS_Store
