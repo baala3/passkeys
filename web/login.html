@@ -5,6 +5,7 @@
     <title>Passkey Demo</title>
     <link rel="stylesheet" href="/static/style.css" />
     <script src="/static/common.js"></script>
+    <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
   </head>
   <body>
     <div class="header">
@@ -22,64 +23,45 @@
   </body>
   <script>
     // login a user
-    function loginUser() {
+    async function loginUser() {
       const username = document.getElementById("username").value;
       if (!username) {
         showNotification("Please enter your username");
         return;
       }
 
-      fetch(`/login/begin/${username}`)
-        .then((res) => res.json())
-        .then((credentialRequestOptions) => {
-          credentialRequestOptions.publicKey.challenge = bufferDecode(
-            credentialRequestOptions.publicKey.challenge
-          );
+      const { startAuthentication } = SimpleWebAuthnBrowser;
 
-          credentialRequestOptions.publicKey.allowCredentials.forEach(
-            (credential) => {
-              credential.id = bufferDecode(credential.id);
-            }
-          );
+      const response = await fetch(`/login/begin/${username}`);
+      let assertionResponse;
 
-          return navigator.credentials.get({
-            publicKey: credentialRequestOptions.publicKey,
-          });
-        })
-        .then((assertion) => {
-          console.log("success fetching navigator.credentials.get()");
-          let authData = assertion.response.authenticatorData;
-          let clientDataJSON = assertion.response.clientDataJSON;
-          let rawId = assertion.rawId;
-          let sig = assertion.response.signature;
-          let userHandle = assertion.response.userHandle;
-
-          fetch(`/login/finish/${username}`, {
-            method: "POST",
-            body: JSON.stringify({
-              id: assertion.id,
-              rawID: bufferEncode(rawId),
-              type: assertion.type,
-              response: {
-                authenticatorData: bufferEncode(authData),
-                clientDataJSON: bufferEncode(clientDataJSON),
-                signature: bufferEncode(sig),
-                userHandle: bufferEncode(userHandle),
-              },
-            }),
-            headers: {
-              "Content-Type": "application/json",
-            },
-          });
-        })
-        .then(() => {
-          console.log("sign in with passkey successful");
-          showNotification("Successfully logged in.");
-        })
-        .catch((err) => {
-          console.error("Error:", err);
-          showNotification("Login failed.");
+      try {
+        const credentialRequestOptions = await response.json();
+        assertionResponse = await startAuthentication({
+          optionsJSON: credentialRequestOptions.publicKey,
         });
+      } catch (err) {
+        throw err;
+      }
+
+      const verificationResponse = await fetch(`/login/finish/${username}`, {
+        method: "POST",
+        body: JSON.stringify(assertionResponse),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const verificationResponseJSON = await verificationResponse.json();
+
+      if (
+        verificationResponseJSON &&
+        verificationResponseJSON.status === "ok"
+      ) {
+        showNotification("Successfully logged in.");
+      } else {
+        showNotification("Login failed.");
+      }
     }
   </script>
 </html>

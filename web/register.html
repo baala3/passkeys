@@ -5,6 +5,7 @@
     <title>PassKey Demo</title>
     <link rel="stylesheet" type="text/css" href="/static/style.css" />
     <script src="/static/common.js"></script>
+    <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
   </head>
   <body>
     <div class="header">
@@ -17,59 +18,44 @@
   </body>
   <script>
     // register a new user
-    function registerUser() {
+    async function registerUser() {
       const username = document.getElementById("username").value;
       if (!username) {
         showNotification("Please enter your username");
         return;
       }
 
-      fetch(`/register/begin/${username}`)
-        .then((res) => res.json())
-        .then((credentialCreationOptions) => {
-          // decode challenge and user id as they are base64url encoded
-          credentialCreationOptions.publicKey.challenge = bufferDecode(
-            credentialCreationOptions.publicKey.challenge
-          );
-          credentialCreationOptions.publicKey.user.id = bufferDecode(
-            credentialCreationOptions.publicKey.user.id
-          );
+      const { startRegistration } = SimpleWebAuthnBrowser;
 
-          // create the credential
-          return navigator.credentials.create({
-            publicKey: credentialCreationOptions.publicKey,
-          });
-        })
-        .then((credential) => {
-          console.log("success fetching navigator.credentials.create()");
-          let attestationObject = credential.response.attestationObject;
-          let clientDataJSON = credential.response.clientDataJSON;
-          let rawId = credential.rawId;
-
-          fetch(`/register/finish/${username}`, {
-            method: "POST",
-            body: JSON.stringify({
-              id: credential.id,
-              rawID: bufferEncode(rawId),
-              type: credential.type,
-              response: {
-                attestationObject: bufferEncode(attestationObject),
-                clientDataJSON: bufferEncode(clientDataJSON),
-              },
-            }),
-            headers: {
-              "Content-Type": "application/json",
-            },
-          });
-        })
-        .then(() => {
-          console.log("passkey registered successfully");
-          showNotification("Successfully registered.");
-        })
-        .catch((err) => {
-          console.error("Error:", err);
-          showNotification("Registration failed.");
+      const response = await fetch(`/register/begin/${username}`);
+      let attestationResponse;
+      try {
+        const credentialCreationOptions = await response.json();
+        attestationResponse = await startRegistration({
+          optionsJSON: credentialCreationOptions.publicKey,
         });
+      } catch (err) {
+        throw err;
+      }
+
+      const verificationResponse = await fetch(`/register/finish/${username}`, {
+        method: "POST",
+        body: JSON.stringify(attestationResponse),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const verificationResponseJSON = await verificationResponse.json();
+
+      if (
+        verificationResponseJSON &&
+        verificationResponseJSON.status === "ok"
+      ) {
+        showNotification("Successfully registered.");
+      } else {
+        showNotification("Registration failed.");
+      }
     }
   </script>
 </html>
