@@ -14,7 +14,7 @@ type WebAuthnController struct {
 }
 
 func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
-	return func(ctx echo.Context) error {	
+	return func(ctx echo.Context) error {
 		username := ctx.Param("username")
 
 	user, err := wc.UserStore.FindUserByName(ctx.Request().Context(), username)
@@ -28,9 +28,10 @@ func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 	}
 
 	// generate PublicKeyCredentialCreationOptions, session data
-	options, sessionData, err := wc.WebAuthnAPI.BeginRegistration(user)
+	options, sessionData, err := wc.WebAuthnAPI.BeginRegistration(user,
+		webauthn.WithExclusions(user.CredentialExcludeList()))
 
-	if err!=nil{
+	if err != nil{
 		ctx.Logger().Error("error webauthnAPI.BeginRegistration() %v", err)
 		return ctx.JSON(http.StatusInternalServerError, err.Error())
 	}

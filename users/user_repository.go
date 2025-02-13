@@ -3,7 +3,6 @@ package users
 import (
 	"context"
 
-	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
@@ -45,11 +44,6 @@ func (ur *UserRepository) CreateUser(ctx context.Context, name string) (*User, e
 }
 
 func (ur *UserRepository) AddWebauthnCredential(ctx context.Context, userID uuid.UUID, credential *webauthn.Credential) error {
-	transport := []protocol.AuthenticatorTransport{}
-	for _, t := range credential.Transport {
-		transport = append(transport, t)
-	}
-
 	newWebautnCredential := &WebauthnCredentials{
 		UserID: userID,
 		CredentialID: credential.ID,
@@ -62,7 +56,7 @@ func (ur *UserRepository) AddWebauthnCredential(ctx context.Context, userID uuid
 
 	_, err := ur.DB.NewInsert().
 		Model(newWebautnCredential).
-		Column("user_id", "credential_id", "public_key", "attestation_type", "flags", "authenticator").
+		Column("user_id", "credential_id", "public_key", "attestation_type", "transport","flags", "authenticator").
 		Exec(ctx)
 	if err != nil {
 		return err
