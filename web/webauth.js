@@ -1,7 +1,7 @@
 // check if the browser supports WebAuthn
 document.addEventListener("DOMContentLoaded", function () {
   if (!window.PublicKeyCredential) {
-    alert(
+    showNotification(
       "WebAuthn is not supported on this browser. Please use a modern browser to use this demo."
     );
   }
@@ -26,7 +26,7 @@ function bufferEncode(value) {
 function registerUser() {
   const username = document.getElementById("username").value;
   if (!username) {
-    alert("Please enter your username");
+    showNotification("Please enter your username");
     return;
   }
 
@@ -69,11 +69,12 @@ function registerUser() {
       });
     })
     .then(() => {
-      alert("User registered successfully");
+      console.log("passkey registered successfully");
+      showNotification("Successfully registered.");
     })
     .catch((err) => {
-      alert("User registered failed");
       console.error("Error:", err);
+      showNotification("Registration failed.");
     });
 }
 
@@ -81,7 +82,7 @@ function registerUser() {
 function loginUser() {
   const username = document.getElementById("username").value;
   if (!username) {
-    alert("Please enter your username");
+    showNotification("Please enter your username");
     return;
   }
 
@@ -129,11 +130,18 @@ function loginUser() {
       });
     })
     .then(() => {
-      console.log("User logged in successfully");
-      alert("User logged in successfully");
+      console.log("sign in with passkey successful");
+      showNotification("Successfully logged in.");
     })
     .catch((err) => {
       console.error("Error:", err);
-      alert("User logged in failed");
+      showNotification("Login failed.");
     });
+}
+
+function showNotification(message) {
+  document.getElementById("notification").innerHTML = message;
+  setTimeout(() => {
+    document.getElementById("notification").innerHTML = "";
+  }, 3000);
 }

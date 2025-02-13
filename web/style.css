@@ -9,13 +9,11 @@ body {
   justify-content: center;
   height: 100vh;
 }
-label {
-  font-size: 16px;
-  margin-bottom: 8px;
-}
+
 input {
   padding: 8px;
   width: 300px;
+  font-size: 25px;
 }
 button {
   background-color: #4caf50;
@@ -24,8 +22,9 @@ button {
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  font-size: 16px;
-  margin: 5px;
+  font-size: 20px;
+  margin: 8px 4px;
+  width: 150px;
 }
 
 button:hover {
@@ -41,4 +40,15 @@ button:hover {
   position: fixed;
   top: 0;
   left: 0;
+}
+
+#notification {
+  padding: 10px;
+  margin: 15px;
+  border-radius: 5px;
+  width: 300px;
+  text-align: center;
+  color: blue;
+  font-size: 16px;
+  min-height: 20px;
 }
