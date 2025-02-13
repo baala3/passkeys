@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-webauthn/webauthn/webauthn"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -21,8 +22,8 @@ func init() {
 	})
 }
 
-func GetSession(ctx context.Context, username string) (*webauthn.SessionData, error) {
-	bytes, err := sessionStore.Get(ctx, username).Bytes()
+func GetSession(ctx context.Context, id string) (*webauthn.SessionData, error) {
+	bytes, err := sessionStore.Get(ctx, id).Bytes()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session data: %v", err)
 	}
@@ -34,16 +35,18 @@ func GetSession(ctx context.Context, username string) (*webauthn.SessionData, er
 	return data, nil
 }
 
-func CreateSession(ctx context.Context, username string, data *webauthn.SessionData) error {
+func CreateSession(ctx context.Context, data *webauthn.SessionData) (string, error) {
 	// Marshal session data to JSON
 	bytes, err := json.Marshal(data)
 	if err != nil {
-		return fmt.Errorf("failed to encode session data: %v", err)	
+		return "", fmt.Errorf("failed to encode session data: %v", err)	
 	}
 
-	if err := sessionStore.Set(ctx, username, bytes, duration).Err(); err != nil {
-		return fmt.Errorf("failed to save session data: %v", err)
+	id := uuid.New().String()
+
+	if err := sessionStore.Set(ctx, id, bytes, duration).Err(); err != nil {
+		return "", fmt.Errorf("failed to save session data: %v", err)
 	}
 
-	return nil
+	return id, nil
 }
