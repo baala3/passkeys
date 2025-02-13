@@ -47,7 +47,7 @@ func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 		})
 	}
 
-	id, err := CreateSession(ctx.Request().Context(), sessionData)
+	sessionId, err := CreateSession(ctx.Request().Context(), sessionData)
 	if err != nil {
 		ctx.Logger().Error("error CreateSession() %v", err)
 		return ctx.JSON(http.StatusInternalServerError, FIDO2Response{
@@ -58,7 +58,7 @@ func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 
 	ctx.SetCookie(&http.Cookie{
 		Name: "registration",
-		Value: id,
+		Value: sessionId,
 		Path: "/",
 	})
 
@@ -89,7 +89,8 @@ func (wc *WebAuthnController) FinishRegistration() echo.HandlerFunc {
 		})
 	}
 
-	sessionData, err := GetSession(ctx.Request().Context(), cookie.Value)
+	sessionId := cookie.Value
+	sessionData, err := GetSession(ctx.Request().Context(), sessionId)
 	if err != nil {
 		ctx.Logger().Error("error GetSession() %v", err)
 		return ctx.JSON(http.StatusBadRequest, FIDO2Response{
@@ -115,6 +116,7 @@ func (wc *WebAuthnController) FinishRegistration() echo.HandlerFunc {
 		})
 	}
 
+	DeleteSession(ctx.Request().Context(), sessionId)
 	return ctx.JSON(http.StatusOK, FIDO2Response{
 		Status:       "ok",
 		ErrorMessage: "",
@@ -151,7 +153,7 @@ func (wc *WebAuthnController) BeginLogin() echo.HandlerFunc {
 		})
 	}
 
-	id, err := CreateSession(ctx.Request().Context(), sessionData)
+	sessionId, err := CreateSession(ctx.Request().Context(), sessionData)
 	if err != nil {
 		ctx.Logger().Error("error CreateSession() %v", err)
 		return ctx.JSON(http.StatusInternalServerError, FIDO2Response{
@@ -162,7 +164,7 @@ func (wc *WebAuthnController) BeginLogin() echo.HandlerFunc {
 
 	ctx.SetCookie(&http.Cookie{
 		Name: "login",
-		Value: id,
+		Value: sessionId,
 		Path: "/",
 	})
 
@@ -184,6 +186,7 @@ func (wc *WebAuthnController) FinishLogin() echo.HandlerFunc {
 	}
 
 	cookie, err := ctx.Cookie("login")
+	sessionId := cookie.Value
 	if err != nil {
 		ctx.Logger().Error("error GetCookie() %v", err)
 		return ctx.JSON(http.StatusBadRequest, FIDO2Response{
@@ -191,7 +194,7 @@ func (wc *WebAuthnController) FinishLogin() echo.HandlerFunc {
 			ErrorMessage: err.Error(),
 		})
 	}
-	sessionData, err := GetSession(ctx.Request().Context(), cookie.Value)
+	sessionData, err := GetSession(ctx.Request().Context(), sessionId)
 	if err != nil {
 		ctx.Logger().Error("error GetSession() %v", err)
 		return ctx.JSON(http.StatusBadRequest, FIDO2Response{
@@ -211,6 +214,7 @@ func (wc *WebAuthnController) FinishLogin() echo.HandlerFunc {
 		})
 	}
 
+	DeleteSession(ctx.Request().Context(), sessionId)
 	return ctx.JSON(http.StatusOK, FIDO2Response{
 		Status:       "ok",
 		ErrorMessage: "",

@@ -50,3 +50,10 @@ func CreateSession(ctx context.Context, data *webauthn.SessionData) (string, err
 
 	return id, nil
 }
+
+func DeleteSession(ctx context.Context, id string) error {
+	if err := sessionStore.Del(ctx, id).Err(); err != nil {
+		return fmt.Errorf("failed to delete session data: %v", err)
+	}
+	return nil
+}
