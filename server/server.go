@@ -12,7 +12,7 @@ type Server struct {
 
 func (s *Server) Start() {
 	s.registerEndpoints()
-	s.router.Logger.Fatal(s.router.Start(":8080"))
+	s.router.Logger.Fatal(s.router.Start(":9044"))
 }
 
 func (s *Server) registerEndpoints() {
