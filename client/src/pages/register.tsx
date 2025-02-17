@@ -63,6 +63,12 @@ function Register(): React.ReactElement {
   return (
     <>
       <div className="header">
+        <img
+          src="/passkey_logo.png"
+          width="60"
+          height="60"
+          alt="Passkey Logo"
+        />
         <h1>Passkey Demo</h1>
       </div>
       <div id="notification">{notification}</div>
