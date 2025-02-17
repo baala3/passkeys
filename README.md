@@ -3,24 +3,16 @@ library.
 
 ## Local setup
 
-1. Start Postgres and Redis with Docker Compose:
+1. setup the app (install dependencies and initialize the database schema)
 
 ```powershell
-docker compose up -d
+./setup.sh
 ```
 
-2. Setup the database:
+2. start the app (starts the Go server together with Redis and Postgres)
 
 ```powershell
-cd server
-go run ./db/migration db init
-go run ./db/migration db migrate
-```
-
-3. Start the server:
-
-```powershell
-go run .
+./dev.sh
 ```
 
 ---
