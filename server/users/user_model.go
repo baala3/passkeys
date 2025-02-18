@@ -1,6 +1,7 @@
 package users
 
 import (
+	"strings"
 	"time"
 
 	"github.com/go-webauthn/webauthn/protocol"
@@ -22,7 +23,7 @@ type WebauthnCredentials struct {
 
 type User struct {
 	ID uuid.UUID `json:"id" bun:"id,pk"`
-	Name string `json:"name" bun:"name"`
+	Email string `json:"email" bun:"email"`
 	WebauthnCredentials []WebauthnCredentials `json:"webauthn_credentials" bun:"rel:has-many,join:id=user_id"`
 	CreatedAt time.Time `json:"created_at" bun:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" bun:"updated_at"`
@@ -36,12 +37,12 @@ func (u *User) WebAuthnID() []byte {
 
 // WebAuthnName returns the user's username
 func (u *User) WebAuthnName() string {
-	return u.Name
+	return strings.Split(u.Email, "@")[0]
 }
 
 // WebAuthnDisplayName returns the user's display name
 func (u *User) WebAuthnDisplayName() string {
-	return u.Name
+	return strings.Split(u.Email, "@")[0]
 }
 
 // WebAuthnIcon is not (yet) implemented

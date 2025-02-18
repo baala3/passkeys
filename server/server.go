@@ -33,8 +33,8 @@ func (s *Server) registerEndpoints() {
 	s.router.FileFS("/", "index.html", distIndexHTML)
 	s.router.FileFS("/sign-up", "index.html", distIndexHTML)
 
-	s.router.GET("/register/begin/:username", s.webauthnController.BeginRegistration())
-	s.router.POST("/register/finish/:username", s.webauthnController.FinishRegistration())
-	s.router.GET("/login/begin/:username", s.webauthnController.BeginLogin())
-	s.router.POST("/login/finish/:username", s.webauthnController.FinishLogin())
+	s.router.POST("/register/begin", s.webauthnController.BeginRegistration())
+	s.router.POST("/register/finish", s.webauthnController.FinishRegistration())
+	s.router.POST("/login/begin", s.webauthnController.BeginLogin())
+	s.router.POST("/login/finish", s.webauthnController.FinishLogin())
 }

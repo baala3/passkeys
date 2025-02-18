@@ -2,6 +2,7 @@ package auth
 
 import (
 	"net/http"
+	"net/mail"
 
 	"github.com/baala3/passkey-demo/users"
 	"github.com/go-webauthn/webauthn/protocol"
@@ -19,14 +20,34 @@ type FIDO2Response struct {
 	ErrorMessage string `json:"errorMessage"`
 }
 
+type Params struct {
+	Email string
+
+}
+
 func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		username := ctx.Param("username")
+		var p Params
+		if err := ctx.Bind(&p); err != nil{
+			return ctx.JSON(http.StatusBadRequest, FIDO2Response{
+				Status:       "error",
+				ErrorMessage: err.Error(),
+			})
+		}
 
-	user, err := wc.UserStore.FindUserByName(ctx.Request().Context(), username)
+
+		if _,err := mail.ParseAddress(p.Email); err != nil{
+			return ctx.JSON(http.StatusBadRequest, FIDO2Response{
+				Status:       "error",
+				ErrorMessage: "Invalid email",
+			})
+		}
+
+
+	user, err := wc.UserStore.FindUserByEmail(ctx.Request().Context(), p.Email)
 
 	if err != nil {
-		user, err = wc.UserStore.CreateUser(ctx.Request().Context(), username)
+		user, err = wc.UserStore.CreateUser(ctx.Request().Context(), p.Email)
 		if err != nil {
 			ctx.Logger().Error("error CreateUser() %v", err)
 			return ctx.JSON(http.StatusInternalServerError, FIDO2Response{
@@ -75,19 +96,8 @@ func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 
 func (wc *WebAuthnController) FinishRegistration() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-	username := ctx.Param("username")
+		cookie, err := ctx.Cookie("registration")
 
-	user, err := wc.UserStore.FindUserByName(ctx.Request().Context(), username)
-
-	if err != nil {
-		ctx.Logger().Error("error FindUserByName() %v", err)
-		return ctx.JSON(http.StatusBadRequest, FIDO2Response{
-			Status:       "error",
-			ErrorMessage: err.Error(),
-		})
-	}
-
-	cookie, err := ctx.Cookie("registration")
 	if err != nil {
 		ctx.Logger().Error("error GetCookie() %v", err)
 		return ctx.JSON(http.StatusBadRequest, FIDO2Response{
@@ -100,6 +110,15 @@ func (wc *WebAuthnController) FinishRegistration() echo.HandlerFunc {
 	sessionData, err := GetSession(ctx.Request().Context(), sessionId)
 	if err != nil {
 		ctx.Logger().Error("error GetSession() %v", err)
+		return ctx.JSON(http.StatusBadRequest, FIDO2Response{
+			Status:       "error",
+			ErrorMessage: err.Error(),
+		})
+	}
+
+	user, err := wc.UserStore.FindUserById(ctx.Request().Context(), sessionData.UserID)
+	if err != nil {
+		ctx.Logger().Error("error FindUserById() %v", err)
 		return ctx.JSON(http.StatusBadRequest, FIDO2Response{
 			Status:       "error",
 			ErrorMessage: err.Error(),
@@ -140,8 +159,15 @@ func (wc *WebAuthnController) FinishRegistration() echo.HandlerFunc {
 
 func (wc *WebAuthnController) BeginLogin() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-	username := ctx.Param("username")
-	user, err := wc.UserStore.FindUserByName(ctx.Request().Context(), username)
+	var p Params
+	if err := ctx.Bind(&p); err != nil{
+		return ctx.JSON(http.StatusBadRequest, FIDO2Response{
+			Status:       "error",
+			ErrorMessage: err.Error(),
+		})
+	}
+
+	user, err := wc.UserStore.FindUserByEmail(ctx.Request().Context(), p.Email)
 	
 	if err != nil {
 		ctx.Logger().Error("error FindUserByName() %v", err)
@@ -188,17 +214,6 @@ func (wc *WebAuthnController) BeginLogin() echo.HandlerFunc {
 
 func (wc *WebAuthnController) FinishLogin() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		username := ctx.Param("username")
-
-	user, err := wc.UserStore.FindUserByName(ctx.Request().Context(), username)
-	if err != nil {
-		ctx.Logger().Error("error FindUserByName() %v", err)
-		return ctx.JSON(http.StatusBadRequest, FIDO2Response{
-			Status:       "error",
-			ErrorMessage: err.Error(),
-		})
-	}
-
 	cookie, err := ctx.Cookie("login")
 	sessionId := cookie.Value
 	if err != nil {
@@ -217,6 +232,14 @@ func (wc *WebAuthnController) FinishLogin() echo.HandlerFunc {
 		})
 	}
 
+	user, err := wc.UserStore.FindUserById(ctx.Request().Context(), sessionData.UserID)
+	if err != nil {
+		ctx.Logger().Error("error FindUserById() %v", err)
+		return ctx.JSON(http.StatusBadRequest, FIDO2Response{
+			Status:       "error",
+			ErrorMessage: err.Error(),
+		})
+	}
 	credential, err := wc.WebAuthnAPI.FinishLogin(user, *sessionData, ctx.Request())
 	if err != nil {
 		ctx.Logger().Error("error webauthnAPI.FinishLogin() %v", err)
@@ -227,12 +250,14 @@ func (wc *WebAuthnController) FinishLogin() echo.HandlerFunc {
 	}
 
 	if !credential.Flags.UserPresent || !credential.Flags.UserVerified {
+		ctx.Logger().Error("User not present or not verified")
 		return ctx.JSON(http.StatusBadRequest, FIDO2Response{
 			Status:       "error",
 			ErrorMessage: "User not present or not verified",
 		})
 	}
 	if credential.Authenticator.CloneWarning {
+		ctx.Logger().Error("Authenticator is cloned")
 		return ctx.JSON(http.StatusBadRequest, FIDO2Response{
 			Status:       "error",
 			ErrorMessage: "Authenticator is cloned",
@@ -240,6 +265,7 @@ func (wc *WebAuthnController) FinishLogin() echo.HandlerFunc {
 	}
 
 	DeleteSession(ctx.Request().Context(), sessionId)
+	ctx.Logger().Info("User logged in")
 	return ctx.JSON(http.StatusOK, FIDO2Response{
 		Status:       "ok",
 		ErrorMessage: "",

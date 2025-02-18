@@ -1,9 +1,15 @@
 #! /bin/bash
 
-# Install Frontend de
-cd client && yarn install
-
-# setup Database
+# spin up postgres and redis
 docker compose up -d
-cd ../server && go run ./db/migration db init && go run ./db/migration db migrate 
+
+# wait for services to be ready
+sleep 3
+# Install Frontend dependencies
+cd client && yarn install && cd ..
+
+# Run migrations
+cd server && go run ./db/migration db init && go run ./db/migration db migrate && cd ..
+
+# Stop docker services
 docker compose down
