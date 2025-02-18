@@ -36,7 +36,7 @@ func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 		}
 
 
-		if _,err := mail.ParseAddress(p.Email); err != nil{
+		if !validEmail(p.Email){
 			return ctx.JSON(http.StatusBadRequest, FIDO2Response{
 				Status:       "error",
 				ErrorMessage: "Invalid email",
@@ -75,7 +75,7 @@ func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 		})
 	}
 
-	sessionId, err := CreateSession(ctx.Request().Context(), sessionData)
+	err = CreateSession(ctx,"registration", sessionData)
 	if err != nil {
 		ctx.Logger().Error("error CreateSession() %v", err)
 		return ctx.JSON(http.StatusInternalServerError, FIDO2Response{
@@ -83,31 +83,15 @@ func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 			ErrorMessage: err.Error(),
 		})
 	}
-
-	ctx.SetCookie(&http.Cookie{
-		Name: "registration",
-		Value: sessionId,
-		Path: "/",
-	})
-
+	
 	return ctx.JSON(http.StatusOK, options)
 }
 }
 
 func (wc *WebAuthnController) FinishRegistration() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		cookie, err := ctx.Cookie("registration")
+		sessionId, sessionData, err := GetSession(ctx,"registration")
 
-	if err != nil {
-		ctx.Logger().Error("error GetCookie() %v", err)
-		return ctx.JSON(http.StatusBadRequest, FIDO2Response{
-			Status:       "error",
-			ErrorMessage: err.Error(),
-		})
-	}
-
-	sessionId := cookie.Value
-	sessionData, err := GetSession(ctx.Request().Context(), sessionId)
 	if err != nil {
 		ctx.Logger().Error("error GetSession() %v", err)
 		return ctx.JSON(http.StatusBadRequest, FIDO2Response{
@@ -193,7 +177,7 @@ func (wc *WebAuthnController) BeginLogin() echo.HandlerFunc {
 		})
 	}
 
-	sessionId, err := CreateSession(ctx.Request().Context(), sessionData)
+	 err = CreateSession(ctx,"login", sessionData)
 	if err != nil {
 		ctx.Logger().Error("error CreateSession() %v", err)
 		return ctx.JSON(http.StatusInternalServerError, FIDO2Response{
@@ -202,28 +186,14 @@ func (wc *WebAuthnController) BeginLogin() echo.HandlerFunc {
 		})
 	}
 
-	ctx.SetCookie(&http.Cookie{
-		Name: "login",
-		Value: sessionId,
-		Path: "/",
-	})
-
 	return ctx.JSON(http.StatusOK, options)
 }
 }
 
 func (wc *WebAuthnController) FinishLogin() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-	cookie, err := ctx.Cookie("login")
-	sessionId := cookie.Value
-	if err != nil {
-		ctx.Logger().Error("error GetCookie() %v", err)
-		return ctx.JSON(http.StatusBadRequest, FIDO2Response{
-			Status:       "error",
-			ErrorMessage: err.Error(),
-		})
-	}
-	sessionData, err := GetSession(ctx.Request().Context(), sessionId)
+	sessionId, sessionData, err := GetSession(ctx,"login")
+	
 	if err != nil {
 		ctx.Logger().Error("error GetSession() %v", err)
 		return ctx.JSON(http.StatusBadRequest, FIDO2Response{
@@ -271,4 +241,9 @@ func (wc *WebAuthnController) FinishLogin() echo.HandlerFunc {
 		ErrorMessage: "",
 	})
 }
+}
+
+func validEmail(email string) bool {
+	_, err := mail.ParseAddress(email)
+	return err == nil
 }
