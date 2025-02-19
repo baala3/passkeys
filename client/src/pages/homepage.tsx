@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Layout } from "../components/layout/Layout";
 import { MenuItem } from "../components/navigation/MenuItem.tsx";
 import { Button } from "../components/input/Button.tsx";
+import { useNavigate } from "react-router-dom";
+import { isAuthenticated, logout } from "../utils/shared";
 
 const MenuItems = [
   { title: "Change email address", link: "#" },
@@ -12,6 +14,25 @@ const MenuItems = [
 ];
 
 export default function Homepage(): React.ReactElement {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate("/");
+    }
+  }, []);
+
+  async function signOut() {
+    const response = await fetch("/logout", {
+      method: "POST",
+    });
+
+    if (response.ok) {
+      logout();
+      navigate("/");
+    }
+  }
+
   return (
     <Layout>
       <div className="mb-10">
@@ -19,10 +40,7 @@ export default function Homepage(): React.ReactElement {
           <MenuItem title={item.title} link={item.link} />
         ))}
       </div>
-      <Button
-        onClickFunc={() => alert("Not yet implemented!")}
-        buttonText="Sign out"
-      />
+      <Button onClickFunc={signOut} buttonText="Sign out" />
     </Layout>
   );
 }

@@ -7,15 +7,15 @@ import {
 import { AuthResponse } from "../../utils/types";
 import { Button } from "../input/Button";
 import { Input } from "../input/Input";
-
+import { useNavigate } from "react-router-dom";
 export function PasswordLogin(): React.ReactElement {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [notification, setNotification] = useState("");
-
+  const navigate = useNavigate();
   useEffect(() => {
     passkeyAutofill();
-  });
+  }, []);
 
   async function passkeyAutofill() {
     const response = await fetch(`/discoverable_login/begin`, {
@@ -60,6 +60,7 @@ export function PasswordLogin(): React.ReactElement {
     const verificationJSON: AuthResponse = await verificationResponse.json();
     if (verificationJSON.status === "ok") {
       setNotification("Successfully logged in.");
+      navigate("/home");
     } else {
       setNotification("Login failed.");
     }
@@ -86,6 +87,7 @@ export function PasswordLogin(): React.ReactElement {
     const loginJSON: AuthResponse = await response.json();
     if (loginJSON.status === "ok") {
       setNotification("Successfully logged in.");
+      navigate("/home");
     } else {
       setNotification(loginJSON.errorMessage);
     }

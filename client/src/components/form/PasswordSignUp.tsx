@@ -1,12 +1,15 @@
 import React, { useState } from "react";
 import { Button } from "../input/Button";
 import { Input } from "../input/Input";
-import { isValidEmail } from "../../utils/validEmail";
+import { isValidEmail } from "../../utils/shared";
 import { AuthResponse } from "../../utils/types";
+import { useNavigate } from "react-router-dom";
+
 export function PasswordSignUp(): React.ReactElement {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [notification, setNotification] = useState("");
+  const navigate = useNavigate();
 
   async function registerUser() {
     if (!isValidEmail(email)) {
@@ -30,6 +33,7 @@ export function PasswordSignUp(): React.ReactElement {
     const registrationJSON: AuthResponse = await response.json();
     if (registrationJSON.status === "ok") {
       setNotification("Successfully registered.");
+      navigate("/home");
     } else {
       setNotification(registrationJSON.errorMessage);
     }

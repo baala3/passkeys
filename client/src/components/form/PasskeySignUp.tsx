@@ -6,11 +6,14 @@ import {
 } from "@simplewebauthn/types";
 import { Button } from "../input/Button";
 import { Input } from "../input/Input";
-import { isValidEmail } from "../../utils/validEmail";
+import { isValidEmail } from "../../utils/shared";
 import { AuthResponse } from "../../utils/types";
+import { useNavigate } from "react-router-dom";
+
 export function PasskeySignUp(): React.ReactElement {
   const [email, setEmail] = useState("");
   const [notification, setNotification] = useState("");
+  const navigate = useNavigate();
 
   async function registerUser() {
     if (!isValidEmail(email)) {
@@ -56,6 +59,7 @@ export function PasskeySignUp(): React.ReactElement {
 
     if (verificationJSON.status === "ok") {
       setNotification("Successfully registered.");
+      navigate("/home");
     } else {
       setNotification("Registration failed.");
     }

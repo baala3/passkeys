@@ -42,7 +42,7 @@ func (pc PasswordController) SignUp() echo.HandlerFunc {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 
-		user, err = pc.UserRepository.CreateUser(ctx.Request().Context(), email, passwordHash)
+		user, err := pc.UserRepository.CreateUser(ctx.Request().Context(), email, passwordHash)
 		if err != nil {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
