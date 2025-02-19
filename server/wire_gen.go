@@ -7,9 +7,9 @@
 package main
 
 import (
-	"github.com/baala3/passkey-demo/auth"
-	"github.com/baala3/passkey-demo/db"
-	"github.com/baala3/passkey-demo/users"
+	"github.com/baala3/passkeys/auth"
+	"github.com/baala3/passkeys/db"
+	"github.com/baala3/passkeys/users"
 	"github.com/labstack/echo/v4"
 )
 

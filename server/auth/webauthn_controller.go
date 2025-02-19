@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/mail"
 
-	"github.com/baala3/passkey-demo/users"
+	"github.com/baala3/passkeys/users"
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/labstack/echo/v4"

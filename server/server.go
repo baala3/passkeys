@@ -3,7 +3,7 @@ package main
 import (
 	"embed"
 
-	"github.com/baala3/passkey-demo/auth"
+	"github.com/baala3/passkeys/auth"
 	"github.com/labstack/echo/v4"
 )
 

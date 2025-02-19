@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/baala3/passkey-demo/db"
+	"github.com/baala3/passkeys/db"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/uptrace/bun/migrate"
