@@ -5,7 +5,7 @@ import { Layout } from "../components/layout/Layout";
 import { PasswordLogin } from "../components/form/PasswordLogin";
 import { PasskeyLogin } from "../components/form/PasskeyLogin";
 
-function Login(): React.ReactElement {
+export default function Login(): React.ReactElement {
   return (
     <Layout>
       <PasswordLogin />
@@ -19,5 +19,3 @@ function Login(): React.ReactElement {
     </Layout>
   );
 }
-
-export default Login;

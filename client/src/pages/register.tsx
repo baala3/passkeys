@@ -5,7 +5,7 @@ import { Layout } from "../components/layout/Layout";
 import { PasswordSignUp } from "../components/form/PasswordSignUp";
 import { PasskeySignUp } from "../components/form/PasskeySignUp";
 
-function Register(): React.ReactElement {
+export default function Register(): React.ReactElement {
   return (
     <Layout>
       <PasswordSignUp />
@@ -18,5 +18,3 @@ function Register(): React.ReactElement {
     </Layout>
   );
 }
-
-export default Register;
