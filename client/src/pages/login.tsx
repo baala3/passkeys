@@ -66,9 +66,12 @@ function Login(): React.ReactElement {
             setNotification("An account with this email does not exist");
             break;
           case "AbortError":
-            setNotification("Autofill failed.");
+            // setNotification("Autofill failed.");
             break;
           default:
+            setNotification(
+              "Login failed due to an unknown error or user cancelled."
+            );
             console.log(err);
         }
       } else {
