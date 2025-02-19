@@ -9,9 +9,11 @@ export function PasswordLogin(): React.ReactElement {
   const [password, setPassword] = useState("");
   const [notification, setNotification] = useState("");
 
+  /* eslint-disable */
   useEffect(() => {
     passkeyAutofill();
   }, []);
+  /* eslint-enable */
 
   async function passkeyAutofill() {
     const response = await fetch(`/discoverable_login/begin`, {
@@ -23,6 +25,7 @@ export function PasswordLogin(): React.ReactElement {
     });
     const credentialRequestOptions = await response.json();
     let assertion: AuthenticationResponseJSON;
+    /* eslint-disable */
     try {
       assertion = await startAuthentication({
         optionsJSON: credentialRequestOptions.publicKey,

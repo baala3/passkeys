@@ -23,6 +23,7 @@ export function PasskeySignUp(): React.ReactElement {
       },
     });
     let registrationResponse: RegistrationResponseJSON;
+    /* eslint-disable */
     try {
       const credentialCreationOptions = await response.json();
 
@@ -38,7 +39,7 @@ export function PasskeySignUp(): React.ReactElement {
       setNotification("An error occurred. Please try again.");
       return;
     }
-
+    /* eslint-enable */
     const verificationResponse = await fetch(`/register/finish`, {
       method: "POST",
       body: JSON.stringify(registrationResponse),

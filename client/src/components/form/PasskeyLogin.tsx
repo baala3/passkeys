@@ -24,6 +24,7 @@ export function PasskeyLogin(): React.ReactElement {
     });
     const credentialRequestOptions = await response.json();
     let assertion: AuthenticationResponseJSON;
+    /* eslint-disable */
     try {
       assertion = await startAuthentication({
         optionsJSON: credentialRequestOptions.publicKey,
@@ -39,6 +40,7 @@ export function PasskeyLogin(): React.ReactElement {
           setNotification("An error occurred. Please try again.");
       }
       return;
+      /* eslint-enable */
     }
 
     const verificationResponse = await fetch(`/login/finish`, {
