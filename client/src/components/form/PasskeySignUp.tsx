@@ -3,14 +3,14 @@ import { startRegistration } from "@simplewebauthn/browser";
 import { RegistrationResponseJSON } from "@simplewebauthn/types";
 import { Button } from "../input/Button";
 import { Input } from "../input/Input";
+import { isValidEmail } from "../../utils/validEmail";
 
 export function PasskeySignUp(): React.ReactElement {
   const [email, setEmail] = useState("");
   const [notification, setNotification] = useState("");
 
   async function registerUser() {
-    const isValidEmail = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g;
-    if (email === "" || !isValidEmail.test(email)) {
+    if (!isValidEmail(email)) {
       setNotification("Please enter your email.");
       return;
     }

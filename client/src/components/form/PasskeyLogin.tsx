@@ -3,15 +3,11 @@ import { startAuthentication } from "@simplewebauthn/browser";
 import { AuthenticationResponseJSON } from "@simplewebauthn/types";
 import { Button } from "../input/Button";
 import { Input } from "../input/Input";
+import { isValidEmail } from "../../utils/validEmail";
 
 export function PasskeyLogin(): React.ReactElement {
   const [email, setEmail] = useState("");
   const [notification, setNotification] = useState("");
-
-  function isValidEmail(email: string): boolean {
-    const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g;
-    return email !== "" && emailRegex.test(email);
-  }
 
   async function loginUser() {
     if (!isValidEmail(email)) {
