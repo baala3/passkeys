@@ -83,3 +83,11 @@ func (ur *UserRepository) AddWebauthnCredential(ctx context.Context, userID uuid
 	}
 	return nil
 }
+
+func (ur *UserRepository) DeleteUser(ctx context.Context, user *User) error {
+	_, err := ur.DB.NewDelete().
+		Model(user).
+		WherePK().
+		Exec(ctx)
+	return err
+}
