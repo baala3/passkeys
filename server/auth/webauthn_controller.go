@@ -193,7 +193,7 @@ func (wc *WebAuthnController) getCredential(ctx echo.Context, sessionData *webau
 }
 
 func (wc *WebAuthnController) getDiscoverableCredentialAssertion(echo.Context) (*protocol.CredentialAssertion, *webauthn.SessionData, error) {
-	return wc.WebAuthnAPI.BeginDiscoverableLogin()
+	return wc.WebAuthnAPI.BeginDiscoverableLogin(webauthn.WithUserVerification(protocol.VerificationRequired))
 }
 
 func (wc *WebAuthnController) getDiscoverableCredential(ctx echo.Context, sessionData *webauthn.SessionData) (*webauthn.Credential, error) {
