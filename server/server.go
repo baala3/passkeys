@@ -8,7 +8,7 @@ import (
 )
 
 type Server struct {
-	router *echo.Echo
+	router             *echo.Echo
 	webauthnController auth.WebAuthnController
 }
 
@@ -20,10 +20,10 @@ func (s *Server) Start() {
 var (
 	//go:embed dist/**
 	dist embed.FS
-	//go:embed dist/index.html 
+	//go:embed dist/index.html
 	indexHTML embed.FS
 
-	distDirFS = echo.MustSubFS(dist, "dist")
+	distDirFS     = echo.MustSubFS(dist, "dist")
 	distIndexHTML = echo.MustSubFS(indexHTML, "dist")
 )
 
