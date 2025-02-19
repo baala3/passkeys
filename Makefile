@@ -13,4 +13,5 @@ run:
 	cd server && air && fg # starting the server and watching for changes
 
 dump-db:
+	docker compose down -v # removing all data from the db
 	rm -rf ./server/db/data/** # removing all data from the db

@@ -31,7 +31,7 @@ export function PasskeyLogin(): React.ReactElement {
     } catch (error: any) {
       switch (error.name) {
         case "TypeError":
-          setNotification("An account with that email does not exist.");
+          setNotification("There is no passkey associated with this account.");
           break;
         case "AbortError":
           break;

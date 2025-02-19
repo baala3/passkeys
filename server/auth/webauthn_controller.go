@@ -3,7 +3,6 @@ package auth
 import (
 	"errors"
 	"net/http"
-	"net/mail"
 
 	"github.com/baala3/passkeys/users"
 	"github.com/go-webauthn/webauthn/protocol"
@@ -29,11 +28,11 @@ func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		var p Params
 		if err := ctx.Bind(&p); err != nil{
-			return sendError(ctx, err)
+			return sendError(ctx, err, http.StatusBadRequest)
 		}
 
 		if !validEmail(p.Email){
-			return sendError(ctx, errors.New("invalid email"))
+			return sendError(ctx, errors.New("invalid email"), http.StatusBadRequest)
 		}
 
 
@@ -42,7 +41,7 @@ func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 	if err != nil {
 		user, err = wc.UserStore.CreateUser(ctx.Request().Context(), p.Email)
 		if err != nil {
-			return sendError(ctx, err)
+			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 	}
 
@@ -57,12 +56,12 @@ func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 		webauthn.WithExclusions(user.CredentialExcludeList()))
 
 	if err != nil{
-		return sendError(ctx, err)
+		return sendError(ctx, err, http.StatusInternalServerError)
 	}
 
 	err = CreateSession(ctx,"registration", sessionData)
 	if err != nil {
-		return sendError(ctx, err)
+		return sendError(ctx, err, http.StatusInternalServerError)
 	}
 	
 	return ctx.JSON(http.StatusOK, options)
@@ -74,25 +73,25 @@ func (wc *WebAuthnController) FinishRegistration() echo.HandlerFunc {
 		sessionId, sessionData, err := GetSession(ctx,"registration")
 
 	if err != nil {
-		return sendError(ctx, err)
+		return sendError(ctx, err, http.StatusInternalServerError)
 	}
 
 	user, err := wc.UserStore.FindUserById(ctx.Request().Context(), sessionData.UserID)
 	if err != nil {
-		return sendError(ctx, err)
+		return sendError(ctx, err, http.StatusInternalServerError)
 	}
 
 	credential, err := wc.WebAuthnAPI.FinishRegistration(user, *sessionData, ctx.Request())
 	if err != nil {
-		return sendError(ctx, err)
+		return sendError(ctx, err, http.StatusInternalServerError)
 	}
 
 	if !credential.Flags.UserPresent || !credential.Flags.UserVerified {
-		return sendError(ctx, errors.New("User not present or not verified"))
+		return sendError(ctx, errors.New("User not present or not verified"), http.StatusBadRequest)
 	}
 
 	if err := wc.UserStore.AddWebauthnCredential(ctx.Request().Context(), user.ID, credential); err != nil {
-		return sendError(ctx, err)
+		return sendError(ctx, err, http.StatusInternalServerError)
 	}
 
 	DeleteSession(ctx.Request().Context(), sessionId)
@@ -120,11 +119,11 @@ func (wc *WebAuthnController) assertionOptions(getCredentialAssertion func(ctx e
 	return func(ctx echo.Context) error {
 		options, sessionData, err := getCredentialAssertion(ctx)
 		if err != nil {
-			return sendError(ctx, err)
+			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 
 		if err := CreateSession(ctx, "login", sessionData); err != nil {
-			return sendError(ctx, err)
+			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 
 		return ctx.JSON(http.StatusOK, options)
@@ -154,20 +153,20 @@ func (wc *WebAuthnController) assertionResult(getCredential func(ctx echo.Contex
 	return func(ctx echo.Context) error {
 		sessionId, sessionData, err := GetSession(ctx, "login")
 		if err != nil {
-			return sendError(ctx, err)
+			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 
 		credential, err := getCredential(ctx, sessionData)
 		if err != nil {
-			return sendError(ctx, err)
+			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 
 		if !credential.Flags.UserPresent || !credential.Flags.UserVerified {
-			return sendError(ctx, errors.New("User not present or not verified"))
+			return sendError(ctx, errors.New("User not present or not verified"), http.StatusBadRequest)
 		}
 
 		if credential.Authenticator.CloneWarning {
-			return sendError(ctx, errors.New("Authenticator is cloned"))
+			return sendError(ctx, errors.New("Authenticator is cloned"), http.StatusBadRequest)
 		}
 		DeleteSession(ctx.Request().Context(), sessionId)
 		return sendOK(ctx)
@@ -192,24 +191,4 @@ func (wc *WebAuthnController) getDiscoverableCredential(ctx echo.Context, sessio
 		func(rawId []byte, userID []byte) (user webauthn.User, err error) {
 			return wc.UserStore.FindUserById(ctx.Request().Context(), userID)
 		}, *sessionData, ctx.Request())
-}
-
-func validEmail(email string) bool {
-	_, err := mail.ParseAddress(email)
-	return err == nil
-}
-
-func sendError(ctx echo.Context, err error) error {
-	ctx.Logger().Error("Error: %v", err)
-	return ctx.JSON(http.StatusBadRequest, FIDO2Response{
-		Status:       "error",
-		ErrorMessage: err.Error(),
-	})
-}
-
-func sendOK(ctx echo.Context) error {
-	return ctx.JSON(http.StatusOK, FIDO2Response{
-		Status:       "ok",
-		ErrorMessage: "",
-	})
 }
