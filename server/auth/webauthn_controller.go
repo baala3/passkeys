@@ -24,7 +24,7 @@ type FIDO2Response struct {
 
 func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		var p AuthParams
+		var p Params
 		if err := ctx.Bind(&p); err != nil{
 			return sendError(ctx, err, http.StatusBadRequest)
 		}
@@ -141,7 +141,7 @@ func (wc *WebAuthnController) assertionOptions(getCredentialAssertion func(ctx e
 }
 
 func (wc *WebAuthnController) getCredentialAssertion(ctx echo.Context) (*protocol.CredentialAssertion, *webauthn.SessionData, error) {
-	var p AuthParams
+	var p Params
 	if err := ctx.Bind(&p); err != nil {
 		return nil, nil, err
 	}

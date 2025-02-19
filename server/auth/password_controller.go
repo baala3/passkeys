@@ -15,7 +15,7 @@ type PasswordController struct {
 
 func (pc PasswordController) SignUp() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		var p AuthParams
+		var p Params
 		if err := ctx.Bind(&p); err != nil {
 			return sendError(ctx, err, http.StatusBadRequest)
 		}
@@ -53,7 +53,7 @@ func (pc PasswordController) SignUp() echo.HandlerFunc {
 
 func (pc PasswordController) Login() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		var p AuthParams
+		var p Params
 		if err := ctx.Bind(&p); err != nil {
 			return sendError(ctx, err, http.StatusBadRequest)
 		}
