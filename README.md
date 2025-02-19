@@ -6,13 +6,13 @@ library.
 1. setup the app (install dependencies and initialize the database schema)
 
 ```powershell
-./setup.sh
+make install
 ```
 
 2. start the app (starts the Go server together with Redis and Postgres)
 
 ```powershell
-./dev.sh
+make run
 ```
 
 ---
