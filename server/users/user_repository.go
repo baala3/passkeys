@@ -46,14 +46,15 @@ func (ur *UserRepository) FindUserById(ctx context.Context, rawUserID []byte) (*
 }
 
 // CreateUser creates a new user in the database
-func (ur *UserRepository) CreateUser(ctx context.Context, email string) (*User, error) {
+func (ur *UserRepository) CreateUser(ctx context.Context, email string, passwordHash string) (*User, error) {
 	user := &User{
 		Email: email,
+		PasswordHash: passwordHash,
 	}
 
 	_, err := ur.DB.NewInsert().
 		Model(user).
-		Column("email").
+		Column("email", "password_hash").
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
