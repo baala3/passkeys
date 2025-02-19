@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button } from "../input/Button";
 import { Input } from "../input/Input";
 import { isValidEmail } from "../../utils/validEmail";
-
+import { AuthResponse } from "../../utils/types";
 export function PasswordSignUp(): React.ReactElement {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +27,7 @@ export function PasswordSignUp(): React.ReactElement {
       },
     });
 
-    const registrationJSON = await response.json();
+    const registrationJSON: AuthResponse = await response.json();
     if (registrationJSON.status === "ok") {
       setNotification("Successfully registered.");
     } else {

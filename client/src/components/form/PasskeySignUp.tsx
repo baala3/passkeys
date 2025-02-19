@@ -1,10 +1,13 @@
 import React, { useState } from "react";
 import { startRegistration } from "@simplewebauthn/browser";
-import { RegistrationResponseJSON } from "@simplewebauthn/types";
+import {
+  RegistrationResponseJSON,
+  PublicKeyCredentialCreationOptionsJSON,
+} from "@simplewebauthn/types";
 import { Button } from "../input/Button";
 import { Input } from "../input/Input";
 import { isValidEmail } from "../../utils/validEmail";
-
+import { AuthResponse } from "../../utils/types";
 export function PasskeySignUp(): React.ReactElement {
   const [email, setEmail] = useState("");
   const [notification, setNotification] = useState("");
@@ -25,7 +28,9 @@ export function PasskeySignUp(): React.ReactElement {
     let registrationResponse: RegistrationResponseJSON;
     /* eslint-disable */
     try {
-      const credentialCreationOptions = await response.json();
+      const credentialCreationOptions: {
+        publicKey: PublicKeyCredentialCreationOptionsJSON;
+      } & AuthResponse = await response.json();
 
       if (credentialCreationOptions.status === "error") {
         setNotification(credentialCreationOptions.errorMessage);
@@ -47,9 +52,9 @@ export function PasskeySignUp(): React.ReactElement {
         "Content-Type": "application/json",
       },
     });
-    const verificationJSON = await verificationResponse.json();
+    const verificationJSON: AuthResponse = await verificationResponse.json();
 
-    if (verificationJSON && verificationJSON.status === "ok") {
+    if (verificationJSON.status === "ok") {
       setNotification("Successfully registered.");
     } else {
       setNotification("Registration failed.");

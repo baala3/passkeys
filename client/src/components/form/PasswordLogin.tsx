@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { startAuthentication } from "@simplewebauthn/browser";
-import { AuthenticationResponseJSON } from "@simplewebauthn/types";
+import {
+  AuthenticationResponseJSON,
+  PublicKeyCredentialCreationOptionsJSON,
+} from "@simplewebauthn/types";
+import { AuthResponse } from "../../utils/types";
 import { Button } from "../input/Button";
 import { Input } from "../input/Input";
 
@@ -23,7 +27,9 @@ export function PasswordLogin(): React.ReactElement {
         "Content-Type": "application/json",
       },
     });
-    const credentialRequestOptions = await response.json();
+    const credentialRequestOptions: {
+      publicKey: PublicKeyCredentialCreationOptionsJSON;
+    } = await response.json();
     let assertion: AuthenticationResponseJSON;
     /* eslint-disable */
     try {
@@ -52,8 +58,8 @@ export function PasswordLogin(): React.ReactElement {
       },
     });
 
-    const verificationJSON = await verificationResponse.json();
-    if (verificationJSON && verificationJSON.status === "ok") {
+    const verificationJSON: AuthResponse = await verificationResponse.json();
+    if (verificationJSON.status === "ok") {
       setNotification("Successfully logged in.");
     } else {
       setNotification("Login failed.");
@@ -78,7 +84,7 @@ export function PasswordLogin(): React.ReactElement {
         "Content-Type": "application/json",
       },
     });
-    const loginJSON = await response.json();
+    const loginJSON: AuthResponse = await response.json();
     if (loginJSON.status === "ok") {
       setNotification("Successfully logged in.");
     } else {
