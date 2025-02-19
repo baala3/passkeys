@@ -10,6 +10,7 @@ import (
 type Server struct {
 	router             *echo.Echo
 	webauthnController auth.WebAuthnController
+	passwordController auth.PasswordController
 }
 
 func (s *Server) Start() {
@@ -40,4 +41,7 @@ func (s *Server) registerEndpoints() {
 
 	s.router.POST("/discoverable_login/begin", s.webauthnController.BeginDiscoverableLogin())
 	s.router.POST("/discoverable_login/finish", s.webauthnController.FinishDiscoverableLogin())
+
+	s.router.POST("/register/password", s.passwordController.SignUp())
+	s.router.POST("/login/password", s.passwordController.Login())
 }

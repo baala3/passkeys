@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// run wire to generate the server
 func NewServer() (*Server, error) {
 	panic(wire.Build(
 		wire.Struct(new(Server), "*"),
@@ -18,6 +19,7 @@ func NewServer() (*Server, error) {
 		wire.Struct(new(users.UserRepository), "*"),
 		db.GetDB,
 		wire.Struct(new(auth.WebAuthnController), "*"),
+		wire.Struct(new(auth.PasswordController), "*"),
 		auth.NewWebAuthnAPI,
 	))
 }

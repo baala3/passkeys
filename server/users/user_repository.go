@@ -64,7 +64,7 @@ func (ur *UserRepository) CreateUser(ctx context.Context, email string, password
 }
 
 func (ur *UserRepository) AddWebauthnCredential(ctx context.Context, userID uuid.UUID, credential *webauthn.Credential) error {
-	newWebautnCredential := &WebauthnCredentials{
+	newWebauthnCredential := &WebauthnCredentials{
 		UserID: userID,
 		CredentialID: credential.ID,
 		PublicKey: credential.PublicKey,
@@ -75,7 +75,7 @@ func (ur *UserRepository) AddWebauthnCredential(ctx context.Context, userID uuid
 	}
 
 	_, err := ur.DB.NewInsert().
-		Model(newWebautnCredential).
+		Model(newWebauthnCredential).
 		Column("user_id", "credential_id", "public_key", "attestation_type", "transport","flags", "authenticator").
 		Exec(ctx)
 	if err != nil {

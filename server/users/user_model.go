@@ -24,7 +24,7 @@ type WebauthnCredentials struct {
 type User struct {
 	ID uuid.UUID `json:"id" bun:"id,pk"`
 	Email string `json:"email" bun:"email"`
-	PasswordHash string `json:"-" bun:"password_hash"`
+	PasswordHash string `json:"-" bun:"password_hash,notnull"`
 	WebauthnCredentials []WebauthnCredentials `json:"webauthn_credentials" bun:"rel:has-many,join:id=user_id"`
 	CreatedAt time.Time `json:"created_at" bun:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" bun:"updated_at"`
