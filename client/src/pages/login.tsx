@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { AuthenticationResponseJSON } from "@simplewebauthn/types";
 
@@ -6,16 +6,22 @@ function Login(): React.ReactElement {
   const [email, setEmail] = useState("");
   const [notification, setNotification] = useState("");
 
-  async function loginUser() {
-    const isValidEmail = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g;
+  useEffect(() => {
+    loginUser(true);
+  }, []);
 
-    if (!email || !isValidEmail.test(email)) {
+  async function loginUser(useBrowserAutofill: boolean) {
+    if (!useBrowserAutofill && !isValidEmail(email)) {
       setNotification("Please enter your email");
       return;
     }
 
+    const loginEndpoint: string = useBrowserAutofill
+      ? "/discoverable_login"
+      : "/login";
+
     try {
-      const response = await fetch(`/login/begin`, {
+      const response = await fetch(`${loginEndpoint}/begin`, {
         method: "POST",
         body: JSON.stringify({ email }),
         headers: {
@@ -29,9 +35,10 @@ function Login(): React.ReactElement {
 
       const assertion: AuthenticationResponseJSON = await startAuthentication({
         optionsJSON: credentialRequestOptions.publicKey,
+        useBrowserAutofill: useBrowserAutofill,
       });
 
-      const verificationResponse = await fetch(`/login/finish`, {
+      const verificationResponse = await fetch(`${loginEndpoint}/finish`, {
         method: "POST",
         body: JSON.stringify(assertion),
         headers: {
@@ -58,14 +65,21 @@ function Login(): React.ReactElement {
           case "TypeError":
             setNotification("An account with this email does not exist");
             break;
+          case "AbortError":
+            setNotification("Autofill failed.");
+            break;
           default:
             console.log(err);
-            setNotification("Login canceled or Failed due to an error.");
         }
       } else {
         setNotification("Login failed due to an unknown error.");
       }
     }
+  }
+
+  function isValidEmail(email: string): boolean {
+    const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g;
+    return email !== "" && emailRegex.test(email);
   }
 
   return (
@@ -136,7 +150,7 @@ function Login(): React.ReactElement {
             </div>
             <div>
               <button
-                onClick={loginUser}
+                onClick={() => loginUser(false)}
                 type="submit"
                 className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
               >

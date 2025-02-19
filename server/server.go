@@ -37,4 +37,7 @@ func (s *Server) registerEndpoints() {
 	s.router.POST("/register/finish", s.webauthnController.FinishRegistration())
 	s.router.POST("/login/begin", s.webauthnController.BeginLogin())
 	s.router.POST("/login/finish", s.webauthnController.FinishLogin())
+
+	s.router.POST("/discoverable_login/begin", s.webauthnController.BeginDiscoverableLogin())
+	s.router.POST("/discoverable_login/finish", s.webauthnController.FinishDiscoverableLogin())
 }
