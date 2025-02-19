@@ -45,4 +45,5 @@ func (s *Server) registerEndpoints() {
 
 	s.router.POST("/register/password", s.passwordController.SignUp())
 	s.router.POST("/login/password", s.passwordController.Login())
+	s.router.POST("/logout", s.passwordController.Logout())
 }

@@ -42,8 +42,12 @@ func (pc PasswordController) SignUp() echo.HandlerFunc {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 
-		_, err = pc.UserRepository.CreateUser(ctx.Request().Context(), email, passwordHash)
+		user, err = pc.UserRepository.CreateUser(ctx.Request().Context(), email, passwordHash)
 		if err != nil {
+			return sendError(ctx, err, http.StatusInternalServerError)
+		}
+
+		if err = Login(ctx, user.ID); err != nil {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 		return sendOK(ctx)
@@ -77,6 +81,24 @@ func (pc PasswordController) Login() echo.HandlerFunc {
 		if !match {
 			return sendError(ctx, errors.New("Invalid password"), http.StatusBadRequest)
 		}
+
+		if err = Login(ctx, user.ID); err != nil {
+			return sendError(ctx, err, http.StatusInternalServerError)
+		}
+		return sendOK(ctx)
+	}
+}
+
+func (pc PasswordController) Logout() echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		cookie, err := ctx.Cookie("auth")
+		if err != nil {
+			return sendError(ctx, errors.New("not logged in"), http.StatusUnauthorized)
+		}
+
+		sessionID := cookie.Value
+		Logout(ctx.Request().Context(), sessionID)
+
 		return sendOK(ctx)
 	}
 }

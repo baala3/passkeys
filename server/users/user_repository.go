@@ -91,3 +91,15 @@ func (ur *UserRepository) DeleteUser(ctx context.Context, user *User) error {
 		Exec(ctx)
 	return err
 }
+
+func (ur *UserRepository) FindUserIDByCredentialID(ctx context.Context, credentialID []byte) (*uuid.UUID, error) {
+	var credential WebauthnCredentials
+	err := ur.DB.NewSelect().
+		Model(&credential).
+		Column("user_id").
+		Where("credential_id = ?", credentialID).Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &credential.UserID, nil
+}

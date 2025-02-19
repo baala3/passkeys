@@ -10,11 +10,13 @@ import (
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/random"
 	"github.com/redis/go-redis/v9"
 )
 
 var sessionStore *redis.Client
-const duration time.Duration = 5 * time.Minute
+const webauthnSessionDuration time.Duration = 5 * time.Minute
+const sessionDuration time.Duration = 30 * 24 * time.Hour
 
 func init() {
 	sessionStore = redis.NewClient(&redis.Options{
@@ -24,7 +26,7 @@ func init() {
 	})
 }
 
-func GetSession(ctx echo.Context, sessionName string) (string,*webauthn.SessionData, error) {
+func GetWebauthnSession(ctx echo.Context, sessionName string) (string,*webauthn.SessionData, error) {
 	cookie, err := ctx.Cookie(sessionName)
 
 	if err != nil {
@@ -47,7 +49,7 @@ func GetSession(ctx echo.Context, sessionName string) (string,*webauthn.SessionD
 	return id, data, nil
 }
 
-func CreateSession(ctx echo.Context, sessionName string, data *webauthn.SessionData) ( error) {
+func CreateWebauthnSession(ctx echo.Context, sessionName string, data *webauthn.SessionData) ( error) {
 	// Marshal session data to JSON
 	bytes, err := json.Marshal(data)
 	if err != nil {
@@ -56,7 +58,7 @@ func CreateSession(ctx echo.Context, sessionName string, data *webauthn.SessionD
 
 	id := uuid.New().String()
 
-	if err := sessionStore.Set(ctx.Request().Context(), id, bytes, duration).Err(); err != nil {
+	if err := sessionStore.Set(ctx.Request().Context(), id, bytes, webauthnSessionDuration).Err(); err != nil {
 		return fmt.Errorf("failed to save session data: %v", err)
 	}
 
@@ -67,6 +69,25 @@ func CreateSession(ctx echo.Context, sessionName string, data *webauthn.SessionD
 	})
 
 	return nil
+}
+
+func Login(ctx echo.Context, userID uuid.UUID) error {
+	sessionID := random.String(20)
+
+	if err := sessionStore.Set(ctx.Request().Context(), sessionID, userID, sessionDuration).Err(); err != nil {
+		return fmt.Errorf("failed to save session data: %v", err)
+	}
+
+	ctx.SetCookie(&http.Cookie{
+		Name: "auth",
+		Value: sessionID,
+		Path: "/",
+	})
+	return nil
+}
+
+func Logout(ctx context.Context, sessionID string) {
+	_ = DeleteSession(ctx, sessionID)
 }
 
 func DeleteSession(ctx context.Context, id string) error {
