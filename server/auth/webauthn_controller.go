@@ -101,68 +101,24 @@ func (wc *WebAuthnController) FinishRegistration() echo.HandlerFunc {
 }
 
 func (wc *WebAuthnController) BeginLogin() echo.HandlerFunc {
-	return func(ctx echo.Context) error {
-	var p Params
-	if err := ctx.Bind(&p); err != nil{
-		return sendError(ctx, err)
-	}
-
-	user, err := wc.UserStore.FindUserByEmail(ctx.Request().Context(), p.Email)
-	
-	if err != nil {
-		return sendError(ctx, err)
-	}
-
-	if user == nil {
-		return sendError(ctx, errors.New("User does not exist"))
-	}
-
-	options, sessionData, err := wc.WebAuthnAPI.BeginLogin(user)
-	if err != nil {
-		return sendError(ctx, err)
-	}
-
-	 err = CreateSession(ctx,"login", sessionData)
-	if err != nil {
-		return sendError(ctx, err)
-	}
-
-	return ctx.JSON(http.StatusOK, options)
-}
+	return wc.assertionOptions(wc.getCredentialAssertion)
 }
 
 func (wc *WebAuthnController) FinishLogin() echo.HandlerFunc {
-	return func(ctx echo.Context) error {
-	sessionId, sessionData, err := GetSession(ctx,"login")
-	
-	if err != nil {
-		return sendError(ctx, err)
-	}
-
-	user, err := wc.UserStore.FindUserById(ctx.Request().Context(), sessionData.UserID)
-	if err != nil {
-		return sendError(ctx, err)
-	}
-	credential, err := wc.WebAuthnAPI.FinishLogin(user, *sessionData, ctx.Request())
-	if err != nil {
-		return sendError(ctx, err)
-	}
-
-	if !credential.Flags.UserPresent || !credential.Flags.UserVerified {
-		return sendError(ctx, errors.New("User not present or not verified"))
-	}
-	if credential.Authenticator.CloneWarning {
-		return sendError(ctx, errors.New("Authenticator is cloned"))
-	}
-
-	DeleteSession(ctx.Request().Context(), sessionId)
-	return sendOK(ctx)
-}
+	return wc.assertionResult(wc.getCredential)
 }
 
 func (wc *WebAuthnController) BeginDiscoverableLogin() echo.HandlerFunc {
+	return wc.assertionOptions(wc.getDiscoverableCredentialAssertion)
+}
+
+func (wc *WebAuthnController) FinishDiscoverableLogin() echo.HandlerFunc {
+	return wc.assertionResult(wc.getDiscoverableCredential)
+}
+
+func (wc *WebAuthnController) assertionOptions(getCredentialAssertion func(ctx echo.Context) (*protocol.CredentialAssertion, *webauthn.SessionData, error)) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		options, sessionData, err := wc.WebAuthnAPI.BeginDiscoverableLogin()
+		options, sessionData, err := getCredentialAssertion(ctx)
 		if err != nil {
 			return sendError(ctx, err)
 		}
@@ -175,32 +131,67 @@ func (wc *WebAuthnController) BeginDiscoverableLogin() echo.HandlerFunc {
 	}
 }
 
-func (wc *WebAuthnController) FinishDiscoverableLogin() echo.HandlerFunc {
+func (wc *WebAuthnController) getCredentialAssertion(ctx echo.Context) (*protocol.CredentialAssertion, *webauthn.SessionData, error) {
+	var p Params
+	if err := ctx.Bind(&p); err != nil {
+		return nil, nil, err
+	}
+
+	user, err := wc.UserStore.FindUserByEmail(ctx.Request().Context(), p.Email)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if user == nil {
+		return nil, nil, errors.New("User does not exist")
+	}
+
+	return wc.WebAuthnAPI.BeginLogin(user)
+}
+
+func (wc *WebAuthnController) assertionResult(getCredential func(ctx echo.Context, sessionData *webauthn.SessionData) (*webauthn.Credential, error)) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		sessionId, sessionData, err := GetSession(ctx, "login")
 		if err != nil {
 			return sendError(ctx, err)
 		}
-		credential, err := wc.WebAuthnAPI.FinishDiscoverableLogin(
-			func(rawId []byte, userID []byte) (user webauthn.User, err error) {
-				return wc.UserStore.FindUserById(ctx.Request().Context(), userID)
-				}, *sessionData, ctx.Request())
 
-			if err != nil {
-				return sendError(ctx, err)
-			}
+		credential, err := getCredential(ctx, sessionData)
+		if err != nil {
+			return sendError(ctx, err)
+		}
 
-			if !credential.Flags.UserPresent || !credential.Flags.UserVerified {
-				return sendError(ctx, errors.New("User not present or not verified"))
-			} 
+		if !credential.Flags.UserPresent || !credential.Flags.UserVerified {
+			return sendError(ctx, errors.New("User not present or not verified"))
+		}
 
-			if credential.Authenticator.CloneWarning {
-				return sendError(ctx, errors.New("Authenticator is cloned"))
-			}
-
-			DeleteSession(ctx.Request().Context(), sessionId)
-			return sendOK(ctx)
+		if credential.Authenticator.CloneWarning {
+			return sendError(ctx, errors.New("Authenticator is cloned"))
+		}
+		DeleteSession(ctx.Request().Context(), sessionId)
+		return sendOK(ctx)
 	}
+}
+
+func (wc *WebAuthnController) getCredential(ctx echo.Context, sessionData *webauthn.SessionData) (*webauthn.Credential, error) {
+   user, err := wc.UserStore.FindUserById(ctx.Request().Context(), sessionData.UserID)
+   if err != nil {
+	return nil, err
+   }
+
+   return wc.WebAuthnAPI.FinishLogin(user, *sessionData, ctx.Request())
+}
+
+func (wc *WebAuthnController) getDiscoverableCredentialAssertion(ctx echo.Context) (*protocol.CredentialAssertion, *webauthn.SessionData, error) {
+	return wc.WebAuthnAPI.BeginDiscoverableLogin()
+}
+
+func (wc *WebAuthnController) getDiscoverableCredential(ctx echo.Context, sessionData *webauthn.SessionData) (*webauthn.Credential, error) {
+	return wc.WebAuthnAPI.FinishDiscoverableLogin(
+		func(rawId []byte, userID []byte) (user webauthn.User, err error) {
+			return wc.UserStore.FindUserById(ctx.Request().Context(), userID)
+		}, *sessionData, ctx.Request())
 }
 
 func validEmail(email string) bool {
