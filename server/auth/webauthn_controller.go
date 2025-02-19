@@ -52,6 +52,7 @@ func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 	authSelect := protocol.AuthenticatorSelection{
 		RequireResidentKey: protocol.ResidentKeyRequired(),
 		ResidentKey:        protocol.ResidentKeyRequirementRequired,
+		UserVerification:   protocol.VerificationRequired
 	}
 
 	// generate PublicKeyCredentialCreationOptions, session data
@@ -150,7 +151,7 @@ func (wc *WebAuthnController) getCredentialAssertion(ctx echo.Context) (*protoco
 		return nil, nil, errors.New("User does not exist")
 	}
 
-	return wc.WebAuthnAPI.BeginLogin(user)
+	return wc.WebAuthnAPI.BeginLogin(user, webauthn.WithUserVerification(protocol.VerificationRequired))
 }
 
 func (wc *WebAuthnController) assertionResult(getCredential func(ctx echo.Context, sessionData *webauthn.SessionData) (*webauthn.Credential, error)) echo.HandlerFunc {
