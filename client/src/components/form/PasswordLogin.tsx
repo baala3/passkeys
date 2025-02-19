@@ -13,11 +13,9 @@ export function PasswordLogin(): React.ReactElement {
   const [password, setPassword] = useState("");
   const [notification, setNotification] = useState("");
 
-  /* eslint-disable */
   useEffect(() => {
     passkeyAutofill();
-  }, []);
-  /* eslint-enable */
+  });
 
   async function passkeyAutofill() {
     const response = await fetch(`/discoverable_login/begin`, {
@@ -31,21 +29,22 @@ export function PasswordLogin(): React.ReactElement {
       publicKey: PublicKeyCredentialCreationOptionsJSON;
     } = await response.json();
     let assertion: AuthenticationResponseJSON;
-    /* eslint-disable */
     try {
       assertion = await startAuthentication({
         optionsJSON: credentialRequestOptions.publicKey,
         useBrowserAutofill: true,
       });
-    } catch (error: any) {
-      switch (error.name) {
-        case "TypeError":
-          setNotification("An account with that email does not exist.");
-          break;
-        case "AbortError":
-          break;
-        default:
-          setNotification("An error occurred. Please try again.");
+    } catch (error) {
+      if (error instanceof Error) {
+        switch (error.name) {
+          case "TypeError":
+            setNotification("An account with that email does not exist.");
+            break;
+          case "AbortError":
+            break;
+          default:
+            setNotification("An error occurred. Please try again.");
+        }
       }
       return;
     }
