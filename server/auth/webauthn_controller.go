@@ -4,10 +4,12 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/alexedwards/argon2id"
 	"github.com/baala3/passkeys/users"
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/random"
 )
 
 type WebAuthnController struct {
@@ -20,13 +22,9 @@ type FIDO2Response struct {
 	ErrorMessage string `json:"errorMessage"`
 }
 
-type Params struct {
-	Email string
-}
-
 func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		var p Params
+		var p AuthParams
 		if err := ctx.Bind(&p); err != nil{
 			return sendError(ctx, err, http.StatusBadRequest)
 		}
@@ -35,14 +33,20 @@ func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 			return sendError(ctx, errors.New("invalid email"), http.StatusBadRequest)
 		}
 
+	_, err := wc.UserStore.FindUserByEmail(ctx.Request().Context(), p.Email)
 
-	user, err := wc.UserStore.FindUserByEmail(ctx.Request().Context(), p.Email)
+	if err == nil {
+		return sendError(ctx, errors.New("An account with this email already exists"), http.StatusConflict)
+	}
 
+	passwordHash, err := argon2id.CreateHash(random.String(20), argon2id.DefaultParams)
 	if err != nil {
-		user, err = wc.UserStore.CreateUser(ctx.Request().Context(), p.Email)
-		if err != nil {
-			return sendError(ctx, err, http.StatusInternalServerError)
-		}
+		return sendError(ctx, errors.New("Internal server error"), http.StatusInternalServerError)
+	}
+
+	user, err := wc.UserStore.CreateUser(ctx.Request().Context(), p.Email, passwordHash)
+	if err != nil {
+		return sendError(ctx, err, http.StatusInternalServerError)
 	}
 
 	authSelect := protocol.AuthenticatorSelection{
@@ -131,7 +135,7 @@ func (wc *WebAuthnController) assertionOptions(getCredentialAssertion func(ctx e
 }
 
 func (wc *WebAuthnController) getCredentialAssertion(ctx echo.Context) (*protocol.CredentialAssertion, *webauthn.SessionData, error) {
-	var p Params
+	var p AuthParams
 	if err := ctx.Bind(&p); err != nil {
 		return nil, nil, err
 	}
@@ -158,7 +162,7 @@ func (wc *WebAuthnController) assertionResult(getCredential func(ctx echo.Contex
 
 		credential, err := getCredential(ctx, sessionData)
 		if err != nil {
-			return sendError(ctx, err, http.StatusInternalServerError)
+			return sendError(ctx, errors.New("There is no password for this account"), http.StatusBadRequest)
 		}
 
 		if !credential.Flags.UserPresent || !credential.Flags.UserVerified {
@@ -182,7 +186,7 @@ func (wc *WebAuthnController) getCredential(ctx echo.Context, sessionData *webau
    return wc.WebAuthnAPI.FinishLogin(user, *sessionData, ctx.Request())
 }
 
-func (wc *WebAuthnController) getDiscoverableCredentialAssertion(ctx echo.Context) (*protocol.CredentialAssertion, *webauthn.SessionData, error) {
+func (wc *WebAuthnController) getDiscoverableCredentialAssertion(echo.Context) (*protocol.CredentialAssertion, *webauthn.SessionData, error) {
 	return wc.WebAuthnAPI.BeginDiscoverableLogin()
 }
 

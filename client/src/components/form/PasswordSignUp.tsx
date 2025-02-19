@@ -1,11 +1,39 @@
 import React, { useState } from "react";
 import { Button } from "../input/Button";
 import { Input } from "../input/Input";
+import { isValidEmail } from "../../utils/validEmail";
 
 export function PasswordSignUp(): React.ReactElement {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [notification, setNotification] = useState("");
+
+  async function registerUser() {
+    if (!isValidEmail(email)) {
+      setNotification("Please enter a valid email.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setNotification("Password must be at least 8 characters long.");
+      return;
+    }
+
+    const response = await fetch(`/register/password`, {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const registrationJSON = await response.json();
+    if (registrationJSON.status === "ok") {
+      setNotification("Successfully registered.");
+    } else {
+      setNotification(registrationJSON.errorMessage);
+    }
+  }
 
   return (
     <>
@@ -29,10 +57,7 @@ export function PasswordSignUp(): React.ReactElement {
           onChange={setPassword}
         />
 
-        <Button
-          onClickFunc={() => setNotification("Not yet implemented")}
-          buttonText="Sign up"
-        />
+        <Button onClickFunc={registerUser} buttonText="Sign up" />
       </div>
     </>
   );
