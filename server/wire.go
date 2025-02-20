@@ -21,8 +21,9 @@ func NewServer() (*Server, error) {
 		db.GetDB,
 		wire.Struct(new(handler.WebAuthnController), "*"),
 		wire.Struct(new(handler.PasswordController), "*"),
-		wire.Struct(new(repository.SessionRepository), "*"),
 		pkg.NewWebAuthnAPI,
 		pkg.GetRedisClient,
+		wire.Struct(new(pkg.UserSession), "*"),
+		wire.Struct(new(pkg.WebAuthnSession), "*"),
 	))
 }

@@ -5,13 +5,14 @@ import (
 	"net/http"
 
 	"github.com/alexedwards/argon2id"
+	"github.com/baala3/passkeys/pkg"
 	"github.com/baala3/passkeys/repository"
 	"github.com/labstack/echo/v4"
 )
 
 type PasswordController struct {
 	UserRepository repository.UserRepository
-	SessionRepository repository.SessionRepository
+	UserSession pkg.UserSession
 }
 
 func (handler PasswordController) SignUp() echo.HandlerFunc {
@@ -48,7 +49,7 @@ func (handler PasswordController) SignUp() echo.HandlerFunc {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 
-		if err = handler.SessionRepository.Login(ctx, user.ID); err != nil {
+		if err = handler.UserSession.Create(ctx, user.ID); err != nil {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 		return sendOK(ctx)
@@ -83,7 +84,7 @@ func (handler PasswordController) Login() echo.HandlerFunc {
 			return sendError(ctx, errors.New("Invalid password."), http.StatusUnauthorized)
 		}
 
-		if err = handler.SessionRepository.Login(ctx, user.ID); err != nil {
+		if err = handler.UserSession.Create(ctx, user.ID); err != nil {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 		return sendOK(ctx)
@@ -98,7 +99,7 @@ func (handler PasswordController) Logout() echo.HandlerFunc {
 		}
 
 		sessionID := cookie.Value
-		handler.SessionRepository.Logout(ctx.Request().Context(), sessionID)
+		handler.UserSession.Delete(ctx, sessionID)
 
 		return sendOK(ctx)
 	}

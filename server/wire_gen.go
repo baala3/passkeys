@@ -28,17 +28,21 @@ func NewServer() (*Server, error) {
 		DB: bunDB,
 	}
 	client := pkg.GetRedisClient()
-	sessionRepository := repository.SessionRepository{
+	webAuthnSession := pkg.WebAuthnSession{
+		RedisClient: client,
+	}
+	userSession := pkg.UserSession{
 		RedisClient: client,
 	}
 	webAuthnController := handler.WebAuthnController{
-		WebAuthnAPI:       webAuthn,
-		UserRepository:    userRepository,
-		SessionRepository: sessionRepository,
+		WebAuthnAPI:     webAuthn,
+		UserRepository:  userRepository,
+		WebAuthnSession: webAuthnSession,
+		UserSession:     userSession,
 	}
 	passwordController := handler.PasswordController{
-		UserRepository:    userRepository,
-		SessionRepository: sessionRepository,
+		UserRepository: userRepository,
+		UserSession:    userSession,
 	}
 	server := &Server{
 		router:             echoEcho,

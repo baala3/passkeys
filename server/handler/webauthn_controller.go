@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/alexedwards/argon2id"
+	"github.com/baala3/passkeys/pkg"
 	"github.com/baala3/passkeys/repository"
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
@@ -15,7 +16,8 @@ import (
 type WebAuthnController struct {
 	WebAuthnAPI *webauthn.WebAuthn
 	UserRepository repository.UserRepository
-	SessionRepository repository.SessionRepository
+	WebAuthnSession pkg.WebAuthnSession
+	UserSession pkg.UserSession
 }
 
 type FIDO2Response struct {
@@ -66,7 +68,7 @@ func (handler *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 		return sendError(ctx, err, http.StatusInternalServerError)
 	}
 
-	err = handler.SessionRepository.CreateWebauthnSession(ctx,"registration", sessionData)
+	err = handler.WebAuthnSession.Create(ctx,"registration", sessionData)
 	if err != nil {
 		_ = handler.UserRepository.DeleteUser(ctx.Request().Context(), user)
 		return sendError(ctx, err, http.StatusInternalServerError)
@@ -78,7 +80,7 @@ func (handler *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 
 func (handler *WebAuthnController) FinishRegistration() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		sessionId, sessionData, err := handler.SessionRepository.GetWebauthnSession(ctx,"registration")
+		sessionId, sessionData, err := handler.WebAuthnSession.Get(ctx,"registration")
 
 	if err != nil {
 		return sendError(ctx, err, http.StatusInternalServerError)
@@ -105,9 +107,9 @@ func (handler *WebAuthnController) FinishRegistration() echo.HandlerFunc {
 		return sendError(ctx, err, http.StatusInternalServerError)
 	}
 
-	_ = handler.SessionRepository.DeleteSession(ctx.Request().Context(), sessionId)
+	_ = handler.WebAuthnSession.Delete(ctx, sessionId)
 
-	if err := handler.SessionRepository.Login(ctx, user.ID); err != nil {
+	if err := handler.UserSession.Create(ctx, user.ID); err != nil {
 		_ = handler.UserRepository.DeleteUser(ctx.Request().Context(), user)
 		return sendError(ctx, err, http.StatusInternalServerError)
 	}
@@ -138,7 +140,7 @@ func (handler *WebAuthnController) assertionOptions(getCredentialAssertion func(
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 
-		if err := handler.SessionRepository.CreateWebauthnSession(ctx, "login", sessionData); err != nil {
+		if err := handler.WebAuthnSession.Create(ctx, "login", sessionData); err != nil {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 
@@ -167,7 +169,7 @@ func (handler *WebAuthnController) getCredentialAssertion(ctx echo.Context) (*pr
 
 func (handler *WebAuthnController) assertionResult(getCredential func(ctx echo.Context, sessionData *webauthn.SessionData) (*webauthn.Credential, error)) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		sessionId, sessionData, err := handler.SessionRepository.GetWebauthnSession(ctx, "login")
+		sessionId, sessionData, err := handler.WebAuthnSession.Get(ctx, "login")
 		if err != nil {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
@@ -184,14 +186,14 @@ func (handler *WebAuthnController) assertionResult(getCredential func(ctx echo.C
 		if credential.Authenticator.CloneWarning {
 			return sendError(ctx, errors.New("Authenticator is cloned"), http.StatusBadRequest)
 		}
-		handler.SessionRepository.DeleteSession(ctx.Request().Context(), sessionId)
+		handler.WebAuthnSession.Delete(ctx, sessionId)
 
 		userID, err := handler.UserRepository.FindUserIDByCredentialID(ctx.Request().Context(), credential.ID)
 		if err != nil {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 
-		if err := handler.SessionRepository.Login(ctx, *userID); err != nil {
+		if err := handler.UserSession.Create(ctx, *userID); err != nil {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 
