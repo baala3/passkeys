@@ -14,7 +14,7 @@ type PasswordController struct {
 	SessionRepository repository.SessionRepository
 }
 
-func (pc PasswordController) SignUp() echo.HandlerFunc {
+func (handler PasswordController) SignUp() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		var p Params
 		if err := ctx.Bind(&p); err != nil {
@@ -32,7 +32,7 @@ func (pc PasswordController) SignUp() echo.HandlerFunc {
 			return sendError(ctx, errors.New("Password must be at least 8 characters"), http.StatusBadRequest)
 		}
 
-		_, err := pc.UserRepository.FindUserByEmail(ctx.Request().Context(), email)
+		_, err := handler.UserRepository.FindUserByEmail(ctx.Request().Context(), email)
 
 		if err == nil {
 			return sendError(ctx, errors.New("An account with that email already exists."), http.StatusConflict)
@@ -43,12 +43,12 @@ func (pc PasswordController) SignUp() echo.HandlerFunc {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 
-		user, err := pc.UserRepository.CreateUser(ctx.Request().Context(), email, passwordHash)
+		user, err := handler.UserRepository.CreateUser(ctx.Request().Context(), email, passwordHash)
 		if err != nil {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 
-		if err = pc.SessionRepository.Login(ctx, user.ID); err != nil {
+		if err = handler.SessionRepository.Login(ctx, user.ID); err != nil {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 		return sendOK(ctx)
@@ -56,7 +56,7 @@ func (pc PasswordController) SignUp() echo.HandlerFunc {
 	}
 }
 
-func (pc PasswordController) Login() echo.HandlerFunc {
+func (handler PasswordController) Login() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		var p Params
 		if err := ctx.Bind(&p); err != nil {
@@ -69,7 +69,7 @@ func (pc PasswordController) Login() echo.HandlerFunc {
 			return sendError(ctx, errors.New("Invalid email"), http.StatusBadRequest)
 		}
 
-		user, err := pc.UserRepository.FindUserByEmail(ctx.Request().Context(), email)
+		user, err := handler.UserRepository.FindUserByEmail(ctx.Request().Context(), email)
 		if err != nil {
 			return sendError(ctx, errors.New("An account with that email does not exist."), http.StatusNotFound)
 		}
@@ -83,14 +83,14 @@ func (pc PasswordController) Login() echo.HandlerFunc {
 			return sendError(ctx, errors.New("Invalid password."), http.StatusUnauthorized)
 		}
 
-		if err = pc.SessionRepository.Login(ctx, user.ID); err != nil {
+		if err = handler.SessionRepository.Login(ctx, user.ID); err != nil {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 		return sendOK(ctx)
 	}
 }
 
-func (pc PasswordController) Logout() echo.HandlerFunc {
+func (handler PasswordController) Logout() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		cookie, err := ctx.Cookie("auth")
 		if err != nil {
@@ -98,7 +98,7 @@ func (pc PasswordController) Logout() echo.HandlerFunc {
 		}
 
 		sessionID := cookie.Value
-		pc.SessionRepository.Logout(ctx.Request().Context(), sessionID)
+		handler.SessionRepository.Logout(ctx.Request().Context(), sessionID)
 
 		return sendOK(ctx)
 	}

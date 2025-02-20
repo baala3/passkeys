@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/baala3/passkeys/pkg"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -23,11 +24,7 @@ type SessionRepository struct {
 
 func NewSessionRepository() SessionRepository {
 	return SessionRepository{
-		redisClient: redis.NewClient(&redis.Options{
-			Addr: "localhost:16379",
-			Password: "",
-			DB: 0,
-		}),
+		redisClient: pkg.GetRedisClient(),
 	}
 }
 

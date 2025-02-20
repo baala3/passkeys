@@ -4,6 +4,7 @@ import (
 	"embed"
 
 	"github.com/baala3/passkeys/handler"
+	"github.com/baala3/passkeys/middleware"
 	"github.com/labstack/echo/v4"
 )
 
@@ -29,12 +30,14 @@ var (
 )
 
 func (s *Server) registerEndpoints() {
+	s.router.Use(middleware.InjectRedis)
+	
 	s.router.StaticFS("/", distDirFS)
 
 	s.router.FileFS("/", "index.html", distIndexHTML)
 	s.router.FileFS("/sign-up", "index.html", distIndexHTML)
-	s.router.FileFS("/home", "index.html", distIndexHTML)
-	s.router.FileFS("/passkeys", "index.html", distIndexHTML)
+	s.router.FileFS("/home", "index.html", distIndexHTML, middleware.Auth)
+	s.router.FileFS("/passkeys", "index.html", distIndexHTML, middleware.Auth)
 
 	s.router.POST("/register/begin", s.webauthnController.BeginRegistration())
 	s.router.POST("/register/finish", s.webauthnController.FinishRegistration())
