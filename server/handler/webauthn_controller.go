@@ -23,7 +23,7 @@ type FIDO2Response struct {
 	ErrorMessage string `json:"errorMessage"`
 }
 
-func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
+func (handler *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		var p Params
 		if err := ctx.Bind(&p); err != nil{
@@ -34,7 +34,7 @@ func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 			return sendError(ctx, errors.New("Invalid email"), http.StatusBadRequest)
 		}
 
-	_, err := wc.UserRepository.FindUserByEmail(ctx.Request().Context(), p.Email)
+	_, err := handler.UserRepository.FindUserByEmail(ctx.Request().Context(), p.Email)
 
 	if err == nil {
 		return sendError(ctx, errors.New("An account with that email already exists."), http.StatusConflict)
@@ -45,7 +45,7 @@ func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 		return sendError(ctx, errors.New("Internal server error"), http.StatusInternalServerError)
 	}
 
-	user, err := wc.UserRepository.CreateUser(ctx.Request().Context(), p.Email, passwordHash)
+	user, err := handler.UserRepository.CreateUser(ctx.Request().Context(), p.Email, passwordHash)
 	if err != nil {
 		return sendError(ctx, err, http.StatusInternalServerError)
 	}
@@ -57,18 +57,18 @@ func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 	}
 
 	// generate PublicKeyCredentialCreationOptions, session data
-	options, sessionData, err := wc.WebAuthnAPI.BeginRegistration(user,
+	options, sessionData, err := handler.WebAuthnAPI.BeginRegistration(user,
 		webauthn.WithAuthenticatorSelection(authSelect),
 		webauthn.WithExclusions(user.CredentialExcludeList()))
 
 	if err != nil{
-		_ = wc.UserRepository.DeleteUser(ctx.Request().Context(), user)
+		_ = handler.UserRepository.DeleteUser(ctx.Request().Context(), user)
 		return sendError(ctx, err, http.StatusInternalServerError)
 	}
 
-	err = wc.SessionRepository.CreateWebauthnSession(ctx,"registration", sessionData)
+	err = handler.SessionRepository.CreateWebauthnSession(ctx,"registration", sessionData)
 	if err != nil {
-		_ = wc.UserRepository.DeleteUser(ctx.Request().Context(), user)
+		_ = handler.UserRepository.DeleteUser(ctx.Request().Context(), user)
 		return sendError(ctx, err, http.StatusInternalServerError)
 	}
 	
@@ -76,69 +76,69 @@ func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 }
 }
 
-func (wc *WebAuthnController) FinishRegistration() echo.HandlerFunc {
+func (handler *WebAuthnController) FinishRegistration() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		sessionId, sessionData, err := wc.SessionRepository.GetWebauthnSession(ctx,"registration")
+		sessionId, sessionData, err := handler.SessionRepository.GetWebauthnSession(ctx,"registration")
 
 	if err != nil {
 		return sendError(ctx, err, http.StatusInternalServerError)
 	}
 
-	user, err := wc.UserRepository.FindUserById(ctx.Request().Context(), sessionData.UserID)
+	user, err := handler.UserRepository.FindUserById(ctx.Request().Context(), sessionData.UserID)
 	if err != nil {
 		return sendError(ctx, err, http.StatusInternalServerError)
 	}
 
-	credential, err := wc.WebAuthnAPI.FinishRegistration(user, *sessionData, ctx.Request())
+	credential, err := handler.WebAuthnAPI.FinishRegistration(user, *sessionData, ctx.Request())
 	if err != nil {
-		_ = wc.UserRepository.DeleteUser(ctx.Request().Context(), user)
+		_ = handler.UserRepository.DeleteUser(ctx.Request().Context(), user)
 		return sendError(ctx, err, http.StatusInternalServerError)
 	}
 
 	if !credential.Flags.UserPresent || !credential.Flags.UserVerified {
-		_ = wc.UserRepository.DeleteUser(ctx.Request().Context(), user)
+		_ = handler.UserRepository.DeleteUser(ctx.Request().Context(), user)
 		return sendError(ctx, errors.New("User not present or not verified"), http.StatusBadRequest)
 	}
 
-	if err := wc.UserRepository.AddWebauthnCredential(ctx.Request().Context(), user.ID, credential); err != nil {
-		_ = wc.UserRepository.DeleteUser(ctx.Request().Context(), user)
+	if err := handler.UserRepository.AddWebauthnCredential(ctx.Request().Context(), user.ID, credential); err != nil {
+		_ = handler.UserRepository.DeleteUser(ctx.Request().Context(), user)
 		return sendError(ctx, err, http.StatusInternalServerError)
 	}
 
-	_ = wc.SessionRepository.DeleteSession(ctx.Request().Context(), sessionId)
+	_ = handler.SessionRepository.DeleteSession(ctx.Request().Context(), sessionId)
 
-	if err := wc.SessionRepository.Login(ctx, user.ID); err != nil {
-		_ = wc.UserRepository.DeleteUser(ctx.Request().Context(), user)
+	if err := handler.SessionRepository.Login(ctx, user.ID); err != nil {
+		_ = handler.UserRepository.DeleteUser(ctx.Request().Context(), user)
 		return sendError(ctx, err, http.StatusInternalServerError)
 	}
 	return sendOK(ctx)
 }
 }
 
-func (wc *WebAuthnController) BeginLogin() echo.HandlerFunc {
-	return wc.assertionOptions(wc.getCredentialAssertion)
+func (handler *WebAuthnController) BeginLogin() echo.HandlerFunc {
+	return handler.assertionOptions(handler.getCredentialAssertion)
 }
 
-func (wc *WebAuthnController) FinishLogin() echo.HandlerFunc {
-	return wc.assertionResult(wc.getCredential)
+func (handler *WebAuthnController) FinishLogin() echo.HandlerFunc {
+	return handler.assertionResult(handler.getCredential)
 }
 
-func (wc *WebAuthnController) BeginDiscoverableLogin() echo.HandlerFunc {
-	return wc.assertionOptions(wc.getDiscoverableCredentialAssertion)
+func (handler *WebAuthnController) BeginDiscoverableLogin() echo.HandlerFunc {
+	return handler.assertionOptions(handler.getDiscoverableCredentialAssertion)
 }
 
-func (wc *WebAuthnController) FinishDiscoverableLogin() echo.HandlerFunc {
-	return wc.assertionResult(wc.getDiscoverableCredential)
+func (handler *WebAuthnController) FinishDiscoverableLogin() echo.HandlerFunc {
+	return handler.assertionResult(handler.getDiscoverableCredential)
 }
 
-func (wc *WebAuthnController) assertionOptions(getCredentialAssertion func(ctx echo.Context) (*protocol.CredentialAssertion, *webauthn.SessionData, error)) echo.HandlerFunc {
+func (handler *WebAuthnController) assertionOptions(getCredentialAssertion func(ctx echo.Context) (*protocol.CredentialAssertion, *webauthn.SessionData, error)) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		options, sessionData, err := getCredentialAssertion(ctx)
 		if err != nil {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 
-		if err := wc.SessionRepository.CreateWebauthnSession(ctx, "login", sessionData); err != nil {
+		if err := handler.SessionRepository.CreateWebauthnSession(ctx, "login", sessionData); err != nil {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 
@@ -146,13 +146,13 @@ func (wc *WebAuthnController) assertionOptions(getCredentialAssertion func(ctx e
 	}
 }
 
-func (wc *WebAuthnController) getCredentialAssertion(ctx echo.Context) (*protocol.CredentialAssertion, *webauthn.SessionData, error) {
+func (handler *WebAuthnController) getCredentialAssertion(ctx echo.Context) (*protocol.CredentialAssertion, *webauthn.SessionData, error) {
 	var p Params
 	if err := ctx.Bind(&p); err != nil {
 		return nil, nil, err
 	}
 
-	user, err := wc.UserRepository.FindUserByEmail(ctx.Request().Context(), p.Email)
+	user, err := handler.UserRepository.FindUserByEmail(ctx.Request().Context(), p.Email)
 
 	if err != nil {
 		return nil, nil, err
@@ -162,12 +162,12 @@ func (wc *WebAuthnController) getCredentialAssertion(ctx echo.Context) (*protoco
 		return nil, nil, errors.New("User does not exist")
 	}
 
-	return wc.WebAuthnAPI.BeginLogin(user, webauthn.WithUserVerification(protocol.VerificationRequired))
+	return handler.WebAuthnAPI.BeginLogin(user, webauthn.WithUserVerification(protocol.VerificationRequired))
 }
 
-func (wc *WebAuthnController) assertionResult(getCredential func(ctx echo.Context, sessionData *webauthn.SessionData) (*webauthn.Credential, error)) echo.HandlerFunc {
+func (handler *WebAuthnController) assertionResult(getCredential func(ctx echo.Context, sessionData *webauthn.SessionData) (*webauthn.Credential, error)) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		sessionId, sessionData, err := wc.SessionRepository.GetWebauthnSession(ctx, "login")
+		sessionId, sessionData, err := handler.SessionRepository.GetWebauthnSession(ctx, "login")
 		if err != nil {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
@@ -184,14 +184,14 @@ func (wc *WebAuthnController) assertionResult(getCredential func(ctx echo.Contex
 		if credential.Authenticator.CloneWarning {
 			return sendError(ctx, errors.New("Authenticator is cloned"), http.StatusBadRequest)
 		}
-		wc.SessionRepository.DeleteSession(ctx.Request().Context(), sessionId)
+		handler.SessionRepository.DeleteSession(ctx.Request().Context(), sessionId)
 
-		userID, err := wc.UserRepository.FindUserIDByCredentialID(ctx.Request().Context(), credential.ID)
+		userID, err := handler.UserRepository.FindUserIDByCredentialID(ctx.Request().Context(), credential.ID)
 		if err != nil {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 
-		if err := wc.SessionRepository.Login(ctx, *userID); err != nil {
+		if err := handler.SessionRepository.Login(ctx, *userID); err != nil {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 
@@ -199,22 +199,22 @@ func (wc *WebAuthnController) assertionResult(getCredential func(ctx echo.Contex
 	}
 }
 
-func (wc *WebAuthnController) getCredential(ctx echo.Context, sessionData *webauthn.SessionData) (*webauthn.Credential, error) {
-   user, err := wc.UserRepository.FindUserById(ctx.Request().Context(), sessionData.UserID)
+func (handler *WebAuthnController) getCredential(ctx echo.Context, sessionData *webauthn.SessionData) (*webauthn.Credential, error) {
+   user, err := handler.UserRepository.FindUserById(ctx.Request().Context(), sessionData.UserID)
    if err != nil {
 	return nil, err
    }
 
-   return wc.WebAuthnAPI.FinishLogin(user, *sessionData, ctx.Request())
+   return handler.WebAuthnAPI.FinishLogin(user, *sessionData, ctx.Request())
 }
 
-func (wc *WebAuthnController) getDiscoverableCredentialAssertion(echo.Context) (*protocol.CredentialAssertion, *webauthn.SessionData, error) {
-	return wc.WebAuthnAPI.BeginDiscoverableLogin(webauthn.WithUserVerification(protocol.VerificationRequired))
+func (handler *WebAuthnController) getDiscoverableCredentialAssertion(echo.Context) (*protocol.CredentialAssertion, *webauthn.SessionData, error) {
+	return handler.WebAuthnAPI.BeginDiscoverableLogin(webauthn.WithUserVerification(protocol.VerificationRequired))
 }
 
-func (wc *WebAuthnController) getDiscoverableCredential(ctx echo.Context, sessionData *webauthn.SessionData) (*webauthn.Credential, error) {
-	return wc.WebAuthnAPI.FinishDiscoverableLogin(
+func (handler *WebAuthnController) getDiscoverableCredential(ctx echo.Context, sessionData *webauthn.SessionData) (*webauthn.Credential, error) {
+	return handler.WebAuthnAPI.FinishDiscoverableLogin(
 		func(rawId []byte, userID []byte) (user webauthn.User, err error) {
-			return wc.UserRepository.FindUserById(ctx.Request().Context(), userID)
+			return handler.UserRepository.FindUserById(ctx.Request().Context(), userID)
 		}, *sessionData, ctx.Request())
 }
