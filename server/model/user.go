@@ -60,7 +60,7 @@ func (u *User) WebAuthnCredentials() []webauthn.Credential {
 // Returns authenticators already registered to the user
 // to prevent multiple registrations of the same authenticator
 func (u *User) CredentialExcludeList() []protocol.CredentialDescriptor {
-	credentialExcludeList := []protocol.CredentialDescriptor{}
+	var credentialExcludeList []protocol.CredentialDescriptor
 
 	for _, cred := range u.WebauthnCredentials {
 		descriptor := protocol.CredentialDescriptor{

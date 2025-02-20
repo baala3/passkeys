@@ -18,7 +18,7 @@ import (
 // run wire to generate the server
 func NewServer() (*Server, error) {
 	echoEcho := echo.New()
-	webAuthn, err := handler.NewWebAuthnAPI()
+	webAuthn, err := repository.NewWebAuthnAPI()
 	if err != nil {
 		return nil, err
 	}
@@ -26,12 +26,15 @@ func NewServer() (*Server, error) {
 	userRepository := repository.UserRepository{
 		DB: bunDB,
 	}
+	sessionRepository := repository.NewSessionRepository()
 	webAuthnController := handler.WebAuthnController{
-		WebAuthnAPI:    webAuthn,
-		UserRepository: userRepository,
+		WebAuthnAPI:       webAuthn,
+		UserRepository:    userRepository,
+		SessionRepository: sessionRepository,
 	}
 	passwordController := handler.PasswordController{
-		UserRepository: userRepository,
+		UserRepository:    userRepository,
+		SessionRepository: sessionRepository,
 	}
 	server := &Server{
 		router:             echoEcho,

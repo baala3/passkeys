@@ -11,6 +11,7 @@ import (
 
 type PasswordController struct {
 	UserRepository repository.UserRepository
+	SessionRepository repository.SessionRepository
 }
 
 func (pc PasswordController) SignUp() echo.HandlerFunc {
@@ -47,7 +48,7 @@ func (pc PasswordController) SignUp() echo.HandlerFunc {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 
-		if err = Login(ctx, user.ID); err != nil {
+		if err = pc.SessionRepository.Login(ctx, user.ID); err != nil {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 		return sendOK(ctx)
@@ -82,7 +83,7 @@ func (pc PasswordController) Login() echo.HandlerFunc {
 			return sendError(ctx, errors.New("Invalid password"), http.StatusBadRequest)
 		}
 
-		if err = Login(ctx, user.ID); err != nil {
+		if err = pc.SessionRepository.Login(ctx, user.ID); err != nil {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
 		return sendOK(ctx)
@@ -97,7 +98,7 @@ func (pc PasswordController) Logout() echo.HandlerFunc {
 		}
 
 		sessionID := cookie.Value
-		Logout(ctx.Request().Context(), sessionID)
+		pc.SessionRepository.Logout(ctx.Request().Context(), sessionID)
 
 		return sendOK(ctx)
 	}
