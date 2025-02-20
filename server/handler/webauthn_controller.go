@@ -31,13 +31,13 @@ func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 		}
 
 		if !validEmail(p.Email){
-			return sendError(ctx, errors.New("invalid email"), http.StatusBadRequest)
+			return sendError(ctx, errors.New("Invalid email"), http.StatusBadRequest)
 		}
 
 	_, err := wc.UserRepository.FindUserByEmail(ctx.Request().Context(), p.Email)
 
 	if err == nil {
-		return sendError(ctx, errors.New("An account with this email already exists"), http.StatusConflict)
+		return sendError(ctx, errors.New("An account with that email already exists."), http.StatusConflict)
 	}
 
 	passwordHash, err := argon2id.CreateHash(random.String(20), argon2id.DefaultParams)

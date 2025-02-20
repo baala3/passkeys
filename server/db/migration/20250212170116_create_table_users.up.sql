@@ -1,6 +1,3 @@
-SET
-    statement_timeout = 0;
---bun:split
 CREATE TABLE
     IF NOT EXISTS users (
         id UUID PRIMARY KEY,
@@ -9,4 +6,3 @@ CREATE TABLE
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
---bun:split
