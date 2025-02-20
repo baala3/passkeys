@@ -22,7 +22,7 @@ func NewServer() (*Server, error) {
 		wire.Struct(new(handler.WebAuthnController), "*"),
 		wire.Struct(new(handler.PasswordController), "*"),
 		wire.Struct(new(repository.SessionRepository), "*"),
-		repository.NewWebAuthnAPI,
+		pkg.NewWebAuthnAPI,
 		pkg.GetRedisClient,
 	))
 }

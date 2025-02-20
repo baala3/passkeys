@@ -19,7 +19,7 @@ import (
 // run wire to generate the server
 func NewServer() (*Server, error) {
 	echoEcho := echo.New()
-	webAuthn, err := repository.NewWebAuthnAPI()
+	webAuthn, err := pkg.NewWebAuthnAPI()
 	if err != nil {
 		return nil, err
 	}

@@ -13,6 +13,7 @@ import (
 	"github.com/alicebob/miniredis/v2"
 	"github.com/baala3/passkeys/db"
 	"github.com/baala3/passkeys/model"
+	"github.com/baala3/passkeys/pkg"
 	"github.com/baala3/passkeys/repository"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -38,7 +39,7 @@ func setup() {
 		panic(err)
 	}
 	userRepository = repository.UserRepository{DB: database}
-	sessionRepository = repository.NewSessionRepository()
+	sessionRepository = repository.SessionRepository{RedisClient: pkg.GetRedisClient()}
 	passwordController = &PasswordController{
 		UserRepository: userRepository,
 		SessionRepository: sessionRepository,
