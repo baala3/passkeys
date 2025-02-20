@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/baala3/passkeys/pkg"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -19,15 +18,8 @@ const webauthnSessionDuration = 5 * time.Minute
 const sessionDuration = 30 * 24 * time.Hour
 
 type SessionRepository struct {
-	redisClient *redis.Client
+	RedisClient *redis.Client
 }
-
-func NewSessionRepository() SessionRepository {
-	return SessionRepository{
-		redisClient: pkg.GetRedisClient(),
-	}
-}
-
 
 func (ss *SessionRepository) GetWebauthnSession(ctx echo.Context, sessionName string) (string,*webauthn.SessionData, error) {
 	cookie, err := ctx.Cookie(sessionName)
@@ -38,7 +30,7 @@ func (ss *SessionRepository) GetWebauthnSession(ctx echo.Context, sessionName st
 
 	id := cookie.Value
 
-	bytes, err := ss.redisClient.Get(ctx.Request().Context(), id).Bytes()
+	bytes, err := ss.RedisClient.Get(ctx.Request().Context(), id).Bytes()
 
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to get session data: %v", err)
@@ -61,7 +53,7 @@ func (ss *SessionRepository) CreateWebauthnSession(ctx echo.Context, sessionName
 
 	id := uuid.New().String()
 
-	if err := ss.redisClient.Set(ctx.Request().Context(), id, bytes, webauthnSessionDuration).Err(); err != nil {
+	if err := ss.RedisClient.Set(ctx.Request().Context(), id, bytes, webauthnSessionDuration).Err(); err != nil {
 		return fmt.Errorf("failed to save session data: %v", err)
 	}
 
@@ -77,7 +69,7 @@ func (ss *SessionRepository) CreateWebauthnSession(ctx echo.Context, sessionName
 func (ss *SessionRepository) Login(ctx echo.Context, userID uuid.UUID) error {
 	sessionID := random.String(20)
 
-	if err := ss.redisClient.Set(ctx.Request().Context(), sessionID, userID.String(), sessionDuration).Err(); err != nil {
+	if err := ss.RedisClient.Set(ctx.Request().Context(), sessionID, userID.String(), sessionDuration).Err(); err != nil {
 		return fmt.Errorf("failed to save session data: %v", err)
 	}
 
@@ -94,7 +86,7 @@ func (ss *SessionRepository) Logout(ctx context.Context, sessionID string) {
 }
 
 func (ss *SessionRepository) DeleteSession(ctx context.Context, id string) error {
-	if err := ss.redisClient.Del(ctx, id).Err(); err != nil {
+	if err := ss.RedisClient.Del(ctx, id).Err(); err != nil {
 		return fmt.Errorf("failed to delete session data: %v", err)
 	}
 	return nil

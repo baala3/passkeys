@@ -6,6 +6,7 @@ package main
 import (
 	"github.com/baala3/passkeys/db"
 	"github.com/baala3/passkeys/handler"
+	"github.com/baala3/passkeys/pkg"
 	"github.com/baala3/passkeys/repository"
 	"github.com/google/wire"
 	"github.com/labstack/echo/v4"
@@ -20,7 +21,8 @@ func NewServer() (*Server, error) {
 		db.GetDB,
 		wire.Struct(new(handler.WebAuthnController), "*"),
 		wire.Struct(new(handler.PasswordController), "*"),
+		wire.Struct(new(repository.SessionRepository), "*"),
 		repository.NewWebAuthnAPI,
-		repository.NewSessionRepository,
+		pkg.GetRedisClient,
 	))
 }
