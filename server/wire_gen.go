@@ -7,29 +7,30 @@
 package main
 
 import (
-	"github.com/baala3/passkeys/auth"
 	"github.com/baala3/passkeys/db"
-	"github.com/baala3/passkeys/users"
+	"github.com/baala3/passkeys/handler"
+	"github.com/baala3/passkeys/repository"
 	"github.com/labstack/echo/v4"
 )
 
 // Injectors from wire.go:
 
+// run wire to generate the server
 func NewServer() (*Server, error) {
 	echoEcho := echo.New()
-	webAuthn, err := auth.NewWebAuthnAPI()
+	webAuthn, err := handler.NewWebAuthnAPI()
 	if err != nil {
 		return nil, err
 	}
 	bunDB := db.GetDB()
-	userRepository := users.UserRepository{
+	userRepository := repository.UserRepository{
 		DB: bunDB,
 	}
-	webAuthnController := auth.WebAuthnController{
-		WebAuthnAPI: webAuthn,
-		UserStore:   userRepository,
+	webAuthnController := handler.WebAuthnController{
+		WebAuthnAPI:    webAuthn,
+		UserRepository: userRepository,
 	}
-	passwordController := auth.PasswordController{
+	passwordController := handler.PasswordController{
 		UserRepository: userRepository,
 	}
 	server := &Server{

@@ -1,16 +1,16 @@
-package auth
+package handler
 
 import (
 	"errors"
 	"net/http"
 
 	"github.com/alexedwards/argon2id"
-	"github.com/baala3/passkeys/users"
+	"github.com/baala3/passkeys/repository"
 	"github.com/labstack/echo/v4"
 )
 
 type PasswordController struct {
-	UserRepository users.UserRepository
+	UserRepository repository.UserRepository
 }
 
 func (pc PasswordController) SignUp() echo.HandlerFunc {

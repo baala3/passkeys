@@ -1,8 +1,9 @@
-package users
+package repository
 
 import (
 	"context"
 
+	"github.com/baala3/passkeys/model"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
@@ -13,8 +14,8 @@ type UserRepository struct {
 }
 
 // FindUserByName returns a user by name
-func (ur *UserRepository) FindUserByEmail(ctx context.Context, email string) (*User, error) {
-	var user User
+func (ur *UserRepository) FindUserByEmail(ctx context.Context, email string) (*model.User, error) {
+	var user model.User
 	err := ur.DB.NewSelect().
 		Model(&user).
 		Relation("WebauthnCredentials").
@@ -27,13 +28,13 @@ func (ur *UserRepository) FindUserByEmail(ctx context.Context, email string) (*U
 }
 
 // FindUserById returns a user by id
-func (ur *UserRepository) FindUserById(ctx context.Context, rawUserID []byte) (*User, error) {
+func (ur *UserRepository) FindUserById(ctx context.Context, rawUserID []byte) (*model.User, error) {
 	userID, err := uuid.FromBytes(rawUserID)
 	if err != nil {
 		return nil, err
 	}
 
-	var user User
+	var user model.User
 	err = ur.DB.NewSelect().
 		Model(&user).
 		Relation("WebauthnCredentials").
@@ -46,8 +47,8 @@ func (ur *UserRepository) FindUserById(ctx context.Context, rawUserID []byte) (*
 }
 
 // CreateUser creates a new user in the database
-func (ur *UserRepository) CreateUser(ctx context.Context, email string, passwordHash string) (*User, error) {
-	user := &User{
+func (ur *UserRepository) CreateUser(ctx context.Context, email string, passwordHash string) (*model.User, error) {
+	user := &model.User{
 		Email: email,
 		PasswordHash: passwordHash,
 	}
@@ -64,7 +65,7 @@ func (ur *UserRepository) CreateUser(ctx context.Context, email string, password
 }
 
 func (ur *UserRepository) AddWebauthnCredential(ctx context.Context, userID uuid.UUID, credential *webauthn.Credential) error {
-	newWebauthnCredential := &WebauthnCredentials{
+	newWebauthnCredential := &model.WebauthnCredentials{
 		UserID: userID,
 		CredentialID: credential.ID,
 		PublicKey: credential.PublicKey,
@@ -84,7 +85,7 @@ func (ur *UserRepository) AddWebauthnCredential(ctx context.Context, userID uuid
 	return nil
 }
 
-func (ur *UserRepository) DeleteUser(ctx context.Context, user *User) error {
+func (ur *UserRepository) DeleteUser(ctx context.Context, user *model.User) error {
 	_, err := ur.DB.NewDelete().
 		Model(user).
 		WherePK().
@@ -93,7 +94,7 @@ func (ur *UserRepository) DeleteUser(ctx context.Context, user *User) error {
 }
 
 func (ur *UserRepository) FindUserIDByCredentialID(ctx context.Context, credentialID []byte) (*uuid.UUID, error) {
-	var credential WebauthnCredentials
+	var credential model.WebauthnCredentials
 	err := ur.DB.NewSelect().
 		Model(&credential).
 		Column("user_id").

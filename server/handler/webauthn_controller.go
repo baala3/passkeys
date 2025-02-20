@@ -1,11 +1,11 @@
-package auth
+package handler
 
 import (
 	"errors"
 	"net/http"
 
 	"github.com/alexedwards/argon2id"
-	"github.com/baala3/passkeys/users"
+	"github.com/baala3/passkeys/repository"
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/labstack/echo/v4"
@@ -14,7 +14,7 @@ import (
 
 type WebAuthnController struct {
 	WebAuthnAPI *webauthn.WebAuthn
-	UserStore users.UserRepository
+	UserRepository repository.UserRepository
 }
 
 type FIDO2Response struct {
@@ -33,7 +33,7 @@ func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 			return sendError(ctx, errors.New("invalid email"), http.StatusBadRequest)
 		}
 
-	_, err := wc.UserStore.FindUserByEmail(ctx.Request().Context(), p.Email)
+	_, err := wc.UserRepository.FindUserByEmail(ctx.Request().Context(), p.Email)
 
 	if err == nil {
 		return sendError(ctx, errors.New("An account with this email already exists"), http.StatusConflict)
@@ -44,7 +44,7 @@ func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 		return sendError(ctx, errors.New("Internal server error"), http.StatusInternalServerError)
 	}
 
-	user, err := wc.UserStore.CreateUser(ctx.Request().Context(), p.Email, passwordHash)
+	user, err := wc.UserRepository.CreateUser(ctx.Request().Context(), p.Email, passwordHash)
 	if err != nil {
 		return sendError(ctx, err, http.StatusInternalServerError)
 	}
@@ -61,13 +61,13 @@ func (wc *WebAuthnController) BeginRegistration() echo.HandlerFunc {
 		webauthn.WithExclusions(user.CredentialExcludeList()))
 
 	if err != nil{
-		_ = wc.UserStore.DeleteUser(ctx.Request().Context(), user)
+		_ = wc.UserRepository.DeleteUser(ctx.Request().Context(), user)
 		return sendError(ctx, err, http.StatusInternalServerError)
 	}
 
 	err = CreateWebauthnSession(ctx,"registration", sessionData)
 	if err != nil {
-		_ = wc.UserStore.DeleteUser(ctx.Request().Context(), user)
+		_ = wc.UserRepository.DeleteUser(ctx.Request().Context(), user)
 		return sendError(ctx, err, http.StatusInternalServerError)
 	}
 	
@@ -83,31 +83,31 @@ func (wc *WebAuthnController) FinishRegistration() echo.HandlerFunc {
 		return sendError(ctx, err, http.StatusInternalServerError)
 	}
 
-	user, err := wc.UserStore.FindUserById(ctx.Request().Context(), sessionData.UserID)
+	user, err := wc.UserRepository.FindUserById(ctx.Request().Context(), sessionData.UserID)
 	if err != nil {
 		return sendError(ctx, err, http.StatusInternalServerError)
 	}
 
 	credential, err := wc.WebAuthnAPI.FinishRegistration(user, *sessionData, ctx.Request())
 	if err != nil {
-		_ = wc.UserStore.DeleteUser(ctx.Request().Context(), user)
+		_ = wc.UserRepository.DeleteUser(ctx.Request().Context(), user)
 		return sendError(ctx, err, http.StatusInternalServerError)
 	}
 
 	if !credential.Flags.UserPresent || !credential.Flags.UserVerified {
-		_ = wc.UserStore.DeleteUser(ctx.Request().Context(), user)
+		_ = wc.UserRepository.DeleteUser(ctx.Request().Context(), user)
 		return sendError(ctx, errors.New("User not present or not verified"), http.StatusBadRequest)
 	}
 
-	if err := wc.UserStore.AddWebauthnCredential(ctx.Request().Context(), user.ID, credential); err != nil {
-		_ = wc.UserStore.DeleteUser(ctx.Request().Context(), user)
+	if err := wc.UserRepository.AddWebauthnCredential(ctx.Request().Context(), user.ID, credential); err != nil {
+		_ = wc.UserRepository.DeleteUser(ctx.Request().Context(), user)
 		return sendError(ctx, err, http.StatusInternalServerError)
 	}
 
 	_ = DeleteSession(ctx.Request().Context(), sessionId)
 
 	if err := Login(ctx, user.ID); err != nil {
-		_ = wc.UserStore.DeleteUser(ctx.Request().Context(), user)
+		_ = wc.UserRepository.DeleteUser(ctx.Request().Context(), user)
 		return sendError(ctx, err, http.StatusInternalServerError)
 	}
 	return sendOK(ctx)
@@ -151,7 +151,7 @@ func (wc *WebAuthnController) getCredentialAssertion(ctx echo.Context) (*protoco
 		return nil, nil, err
 	}
 
-	user, err := wc.UserStore.FindUserByEmail(ctx.Request().Context(), p.Email)
+	user, err := wc.UserRepository.FindUserByEmail(ctx.Request().Context(), p.Email)
 
 	if err != nil {
 		return nil, nil, err
@@ -185,7 +185,7 @@ func (wc *WebAuthnController) assertionResult(getCredential func(ctx echo.Contex
 		}
 		DeleteSession(ctx.Request().Context(), sessionId)
 
-		userID, err := wc.UserStore.FindUserIDByCredentialID(ctx.Request().Context(), credential.ID)
+		userID, err := wc.UserRepository.FindUserIDByCredentialID(ctx.Request().Context(), credential.ID)
 		if err != nil {
 			return sendError(ctx, err, http.StatusInternalServerError)
 		}
@@ -199,7 +199,7 @@ func (wc *WebAuthnController) assertionResult(getCredential func(ctx echo.Contex
 }
 
 func (wc *WebAuthnController) getCredential(ctx echo.Context, sessionData *webauthn.SessionData) (*webauthn.Credential, error) {
-   user, err := wc.UserStore.FindUserById(ctx.Request().Context(), sessionData.UserID)
+   user, err := wc.UserRepository.FindUserById(ctx.Request().Context(), sessionData.UserID)
    if err != nil {
 	return nil, err
    }
@@ -214,6 +214,6 @@ func (wc *WebAuthnController) getDiscoverableCredentialAssertion(echo.Context) (
 func (wc *WebAuthnController) getDiscoverableCredential(ctx echo.Context, sessionData *webauthn.SessionData) (*webauthn.Credential, error) {
 	return wc.WebAuthnAPI.FinishDiscoverableLogin(
 		func(rawId []byte, userID []byte) (user webauthn.User, err error) {
-			return wc.UserStore.FindUserById(ctx.Request().Context(), userID)
+			return wc.UserRepository.FindUserById(ctx.Request().Context(), userID)
 		}, *sessionData, ctx.Request())
 }
