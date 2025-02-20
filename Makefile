@@ -1,6 +1,6 @@
 install:
 	docker compose up -d # spining up postgres and redis
-	sleep 3 # waiting for services to be ready
+	sleep 1 # waiting for services to be ready
 	cd client && yarn install # installing frontend dependencies
 	cd server && go run ./db/migration db init # initializing db migrations
 	cd server && go run ./db/migration db migrate # running db migrations

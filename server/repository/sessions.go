@@ -80,7 +80,7 @@ func (ss *SessionRepository) CreateWebauthnSession(ctx echo.Context, sessionName
 func (ss *SessionRepository) Login(ctx echo.Context, userID uuid.UUID) error {
 	sessionID := random.String(20)
 
-	if err := ss.redisClient.Set(ctx.Request().Context(), sessionID, userID, sessionDuration).Err(); err != nil {
+	if err := ss.redisClient.Set(ctx.Request().Context(), sessionID, userID.String(), sessionDuration).Err(); err != nil {
 		return fmt.Errorf("failed to save session data: %v", err)
 	}
 
