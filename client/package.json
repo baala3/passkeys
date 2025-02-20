@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsc && vite build --outDir ../server/dist --emptyOutDir --watch",
+    "watch": "tsc && vite build --outDir ../server/dist --emptyOutDir --watch",
     "build": "tsc -b && vite build",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"

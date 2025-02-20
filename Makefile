@@ -9,7 +9,7 @@ install:
 run:
 	set -m # enabling job control
 	docker compose up -d # spining up postgres and redis using docker
-	cd client && yarn dev & # generating frontend files
+	cd client && yarn watch & # generating frontend files & watching for changes
 	cd server && air && fg # starting the server and watching for changes
 
 dump-db:

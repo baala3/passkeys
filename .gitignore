@@ -8,3 +8,4 @@ server/dist
 server/tmp
 client/dist
 
+.tool-versions
