@@ -4,8 +4,8 @@
 package main
 
 import (
-	"github.com/baala3/passkeys/db"
 	"github.com/baala3/passkeys/controller"
+	"github.com/baala3/passkeys/db"
 	"github.com/baala3/passkeys/pkg"
 	"github.com/baala3/passkeys/repository"
 	"github.com/google/wire"
