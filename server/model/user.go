@@ -68,7 +68,7 @@ func (u *User) GetWebAuthnCredentials() []pkg.WebAuthnCredentials {
 			AAGUID: cred.Authenticator.AAGUID,
 			SignCount: cred.Authenticator.SignCount,
 			CreatedAt: cred.CreatedAt,
-			UpdatedAt: cred.UpdatedAt,
+			UpdatedAt: cred.UpdatedAt, // TODO: Add last used at
 		}
 	}
 	return credentials

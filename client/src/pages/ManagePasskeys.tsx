@@ -5,6 +5,7 @@ import { Button } from "../components/input/Button";
 import { Heading } from "../components/layout/Heading";
 import { HorizontalLine } from "../components/layout/HorizontalLine";
 import { Passkey } from "../utils/types";
+import DateObject from "react-date-object";
 
 export default function ManagePasskeys(): React.ReactElement {
   const [registeredPasskeys, setRegisteredPasskeys] = useState<Passkey[]>([]);
@@ -17,6 +18,11 @@ export default function ManagePasskeys(): React.ReactElement {
     const res = await fetch("/credentials");
     const passkeys = await res.json();
     setRegisteredPasskeys(passkeys);
+  }
+
+  function formatDate(date: string) {
+    const dateObject = new DateObject({ date: new Date(date).toISOString() });
+    return dateObject.format("DD MMM YY, hh:mm a");
   }
 
   return (
@@ -36,8 +42,8 @@ export default function ManagePasskeys(): React.ReactElement {
             <div>
               <div className="font-bold">{passkey.aaguid}</div>
               <div className="font-light text-xs text-gray-400">
-                <p>Registered at: {passkey.created_at}</p>
-                <p>Last used at: {passkey.updated_at}</p>
+                <p>Registered: {formatDate(passkey.created_at)}</p>
+                <p>Last-Used: {formatDate(passkey.updated_at)}</p>
               </div>
             </div>
             <div>

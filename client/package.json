@@ -12,6 +12,7 @@
   "dependencies": {
     "@simplewebauthn/browser": "^13.1.0",
     "react": "^19.0.0",
+    "react-date-object": "^2.1.9",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.1.5"
   },
