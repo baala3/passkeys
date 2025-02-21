@@ -3,15 +3,15 @@ package main
 import (
 	"embed"
 
-	"github.com/baala3/passkeys/handler"
+	"github.com/baala3/passkeys/controller"
 	"github.com/baala3/passkeys/middleware"
 	"github.com/labstack/echo/v4"
 )
 
 type Server struct {
 	router             *echo.Echo
-	webauthnController handler.WebAuthnController
-	passwordController handler.PasswordController
+	webauthnController controller.WebAuthnController
+	passwordController controller.PasswordController
 }
 
 func (s *Server) Start() {

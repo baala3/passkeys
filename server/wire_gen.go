@@ -7,8 +7,8 @@
 package main
 
 import (
+	"github.com/baala3/passkeys/controller"
 	"github.com/baala3/passkeys/db"
-	"github.com/baala3/passkeys/handler"
 	"github.com/baala3/passkeys/pkg"
 	"github.com/baala3/passkeys/repository"
 	"github.com/labstack/echo/v4"
@@ -34,13 +34,13 @@ func NewServer() (*Server, error) {
 	userSession := pkg.UserSession{
 		RedisClient: client,
 	}
-	webAuthnController := handler.WebAuthnController{
+	webAuthnController := controller.WebAuthnController{
 		WebAuthnAPI:     webAuthn,
 		UserRepository:  userRepository,
 		WebAuthnSession: webAuthnSession,
 		UserSession:     userSession,
 	}
-	passwordController := handler.PasswordController{
+	passwordController := controller.PasswordController{
 		UserRepository: userRepository,
 		UserSession:    userSession,
 	}
