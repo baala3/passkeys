@@ -13,15 +13,16 @@ import { NavigateFunction } from "react-router-dom";
 
 export async function registerUser(
   email: string,
+  context: string = "none",
   navigate: NavigateFunction,
   setNotification: (notification: string) => void
 ) {
-  if (!isValidEmail(email)) {
+  if (context !== "signup" && !isValidEmail(email)) {
     setNotification("Please enter your email.");
     return;
   }
 
-  const response = await fetch(`/register/begin`, {
+  const response = await fetch(`/register/begin?context=${context}`, {
     method: "POST",
     body: JSON.stringify({ email }),
     headers: {
@@ -48,13 +49,16 @@ export async function registerUser(
     }
     return;
   }
-  const verificationResponse = await fetch(`/register/finish`, {
-    method: "POST",
-    body: JSON.stringify(registrationResponse),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  const verificationResponse = await fetch(
+    `/register/finish?context=${context}`,
+    {
+      method: "POST",
+      body: JSON.stringify(registrationResponse),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
   const verificationJSON: AuthResponse = await verificationResponse.json();
 
   if (verificationJSON.status === "ok") {

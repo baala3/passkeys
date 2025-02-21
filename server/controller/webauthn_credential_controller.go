@@ -35,88 +35,94 @@ func (pc *WebAuthnCredentialController) GetCredentials() echo.HandlerFunc {
 func (pc *WebAuthnCredentialController) BeginRegistration() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		var p pkg.Params
-		if err := ctx.Bind(&p); err != nil{
+		if err := ctx.Bind(&p); err != nil {
 			return pkg.SendError(ctx, err, http.StatusBadRequest)
 		}
 
-		if !pkg.IsValidEmail(p.Email){
-			return pkg.SendError(ctx, errors.New("Invalid email"), http.StatusBadRequest)
+		if (p == pkg.Params{}) {
+			user := concerns.CurrentUser(ctx, pc.UserRepository)
+			if user == nil {
+				return pkg.SendError(ctx, errors.New("no user found"), http.StatusBadRequest)
+			}
+			p = pkg.Params{
+				Email: user.Email,
+			}
 		}
 
-	user, err := pc.UserRepository.FindUserByEmail(ctx.Request().Context(), p.Email)
+		user, err := pc.UserRepository.FindUserByEmail(ctx.Request().Context(), p.Email)
 
-	if user == nil {
-		passwordHash, err := argon2id.CreateHash(random.String(20), argon2id.DefaultParams)
-		if err != nil {
-			return pkg.SendError(ctx, errors.New("Internal server error"), http.StatusInternalServerError)
+		if user == nil {
+			passwordHash, err := argon2id.CreateHash(random.String(20), argon2id.DefaultParams)
+			if err != nil {
+				return pkg.SendError(ctx, errors.New("Internal server error"), http.StatusInternalServerError)
+			}
+			user, err = pc.UserRepository.CreateUser(ctx.Request().Context(), p.Email, passwordHash)
+			if err != nil {
+				return pkg.SendError(ctx, err, http.StatusInternalServerError)
+			}
 		}
-		user, err = pc.UserRepository.CreateUser(ctx.Request().Context(), p.Email, passwordHash)
-		if err != nil {
+
+		authSelect := protocol.AuthenticatorSelection{
+			RequireResidentKey: protocol.ResidentKeyRequired(),
+			ResidentKey:        protocol.ResidentKeyRequirementRequired,
+			UserVerification:   protocol.VerificationRequired,
+		}
+
+		// generate PublicKeyCredentialCreationOptions, session data
+		options, sessionData, err := pc.WebAuthnAPI.BeginRegistration(user,
+			webauthn.WithAuthenticatorSelection(authSelect),
+			webauthn.WithExclusions(user.CredentialExcludeList()))
+
+		if err != nil{
+			_ = pc.UserRepository.DeleteUser(ctx.Request().Context(), user)
 			return pkg.SendError(ctx, err, http.StatusInternalServerError)
 		}
-	}
 
-	authSelect := protocol.AuthenticatorSelection{
-		RequireResidentKey: protocol.ResidentKeyRequired(),
-		ResidentKey:        protocol.ResidentKeyRequirementRequired,
-		UserVerification:   protocol.VerificationRequired,
+		err = pc.WebAuthnSession.Create(ctx,"registration", sessionData)
+		if err != nil {
+			_ = pc.UserRepository.DeleteUser(ctx.Request().Context(), user)
+			return pkg.SendError(ctx, err, http.StatusInternalServerError)
+		}
+		
+		return ctx.JSON(http.StatusOK, options)
 	}
-
-	// generate PublicKeyCredentialCreationOptions, session data
-	options, sessionData, err := pc.WebAuthnAPI.BeginRegistration(user,
-		webauthn.WithAuthenticatorSelection(authSelect),
-		webauthn.WithExclusions(user.CredentialExcludeList()))
-
-	if err != nil{
-		_ = pc.UserRepository.DeleteUser(ctx.Request().Context(), user)
-		return pkg.SendError(ctx, err, http.StatusInternalServerError)
-	}
-
-	err = pc.WebAuthnSession.Create(ctx,"registration", sessionData)
-	if err != nil {
-		_ = pc.UserRepository.DeleteUser(ctx.Request().Context(), user)
-		return pkg.SendError(ctx, err, http.StatusInternalServerError)
-	}
-	
-	return ctx.JSON(http.StatusOK, options)
-}
 }
 
 func (pc *WebAuthnCredentialController) FinishRegistration() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		sessionId, sessionData, err := pc.WebAuthnSession.Get(ctx,"registration")
 
-	if err != nil {
-		return pkg.SendError(ctx, err, http.StatusInternalServerError)
-	}
+		if err != nil {
+			return pkg.SendError(ctx, err, http.StatusInternalServerError)
+		}
 
-	user, err := pc.UserRepository.FindUserById(ctx.Request().Context(), sessionData.UserID)
-	if err != nil {
-		return pkg.SendError(ctx, err, http.StatusInternalServerError)
-	}
+		user, err := pc.UserRepository.FindUserById(ctx.Request().Context(), sessionData.UserID)
+		if err != nil {
+			return pkg.SendError(ctx, err, http.StatusInternalServerError)
+		}
 
-	credential, err := pc.WebAuthnAPI.FinishRegistration(user, *sessionData, ctx.Request())
-	if err != nil {
-		_ = pc.UserRepository.DeleteUser(ctx.Request().Context(), user)
-		return pkg.SendError(ctx, err, http.StatusInternalServerError)
-	}
+		credential, err := pc.WebAuthnAPI.FinishRegistration(user, *sessionData, ctx.Request())
+		if err != nil {
+			_ = pc.UserRepository.DeleteUser(ctx.Request().Context(), user)
+			return pkg.SendError(ctx, err, http.StatusInternalServerError)
+		}
 
-	if !credential.Flags.UserPresent || !credential.Flags.UserVerified {
-		_ = pc.UserRepository.DeleteUser(ctx.Request().Context(), user)
-		return pkg.SendError(ctx, errors.New("User not present or not verified"), http.StatusBadRequest)
-	}
+		if !credential.Flags.UserPresent || !credential.Flags.UserVerified {
+			_ = pc.UserRepository.DeleteUser(ctx.Request().Context(), user)
+			return pkg.SendError(ctx, errors.New("User not present or not verified"), http.StatusBadRequest)
+		}
 
-	if err := pc.UserRepository.AddWebauthnCredential(ctx.Request().Context(), user.ID, credential); err != nil {
-		_ = pc.UserRepository.DeleteUser(ctx.Request().Context(), user)
-		return pkg.SendError(ctx, err, http.StatusInternalServerError)
-	}
+		if err := pc.UserRepository.AddWebauthnCredential(ctx.Request().Context(), user.ID, credential); err != nil {
+			_ = pc.UserRepository.DeleteUser(ctx.Request().Context(), user)
+			return pkg.SendError(ctx, err, http.StatusInternalServerError)
+		}
 
-	_ = pc.WebAuthnSession.Delete(ctx, sessionId)
+		_ = pc.WebAuthnSession.Delete(ctx, sessionId)
 
-	if err := pc.UserSession.Create(ctx, user.ID); err != nil {
-		_ = pc.UserRepository.DeleteUser(ctx.Request().Context(), user)
-		return pkg.SendError(ctx, err, http.StatusInternalServerError)
+		if err := pc.UserSession.Create(ctx, user.ID); err != nil {
+			_ = pc.UserRepository.DeleteUser(ctx.Request().Context(), user)
+			return pkg.SendError(ctx, err, http.StatusInternalServerError)
+		}
+		return pkg.SendOK(ctx)
 	}
-	return pkg.SendOK(ctx)
-}
 }

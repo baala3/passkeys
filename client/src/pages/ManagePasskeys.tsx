@@ -6,9 +6,13 @@ import { Heading } from "../components/layout/Heading";
 import { HorizontalLine } from "../components/layout/HorizontalLine";
 import { Passkey } from "../utils/types";
 import DateObject from "react-date-object";
+import { useNavigate } from "react-router-dom";
+import { registerUser } from "../hooks/webauth_api";
 
 export default function ManagePasskeys(): React.ReactElement {
   const [registeredPasskeys, setRegisteredPasskeys] = useState<Passkey[]>([]);
+  const [notification, setNotification] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     getPasskeys();
@@ -16,7 +20,7 @@ export default function ManagePasskeys(): React.ReactElement {
 
   async function getPasskeys() {
     const res = await fetch("/credentials");
-    const passkeys = await res.json();
+    const passkeys = (await res.json()) || [];
     setRegisteredPasskeys(passkeys);
   }
 
@@ -25,11 +29,18 @@ export default function ManagePasskeys(): React.ReactElement {
     return dateObject.format("DD MMM YY, hh:mm a");
   }
 
+  async function handleRegisterUser() {
+    await registerUser("", navigate, setNotification);
+  }
+
   return (
     <Layout>
       <Heading>Manage Passkeys</Heading>
+      <div className="text-sm text-center min-h-5 font-normal text-blue-400">
+        {notification}
+      </div>
       <Button
-        onClickFunc={() => alert("Not implemented yet!")}
+        onClickFunc={() => handleRegisterUser()}
         buttonText="Register a passkey"
       />
       <div className="font-light text-xs mt-2">

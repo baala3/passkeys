@@ -8,6 +8,18 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+func ConditionalAuth(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		context := c.QueryParam("context")
+		switch context {
+		case "signup":
+			return next(c)
+		default:
+			return Auth(next)(c)
+		}
+	}
+}
+
 func Auth(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		redisClient:= ctx.Get("redisClient").(*redis.Client)

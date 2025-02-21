@@ -10,7 +10,7 @@ export function PasskeySignUp(): React.ReactElement {
   const navigate = useNavigate();
 
   async function handleRegisterUser() {
-    await registerUser(email, navigate, setNotification);
+    await registerUser(email, "signup", navigate, setNotification);
   }
 
   return (
