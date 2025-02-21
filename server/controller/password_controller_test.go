@@ -26,7 +26,7 @@ var (
 	e *echo.Echo
 	miniRedis *miniredis.Miniredis
 	userRepository repository.UserRepository
-	sessionRepository repository.SessionRepository
+	userSession pkg.UserSession
 	passwordController *PasswordController
 )
 
@@ -39,10 +39,10 @@ func setup() {
 		panic(err)
 	}
 	userRepository = repository.UserRepository{DB: database}
-	sessionRepository = repository.SessionRepository{RedisClient: pkg.GetRedisClient()}
+	userSession = pkg.UserSession{RedisClient: pkg.GetRedisClient()}
 	passwordController = &PasswordController{
 		UserRepository: userRepository,
-		SessionRepository: sessionRepository,
+		UserSession: userSession,
 	}
 	loadFixtures()
 }

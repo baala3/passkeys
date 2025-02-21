@@ -34,7 +34,13 @@ func NewServer() (*Server, error) {
 	userSession := pkg.UserSession{
 		RedisClient: client,
 	}
-	webAuthnController := controller.WebAuthnController{
+	webAuthnAssertionsController := controller.WebAuthnAssertionsController{
+		WebAuthnAPI:     webAuthn,
+		UserRepository:  userRepository,
+		WebAuthnSession: webAuthnSession,
+		UserSession:     userSession,
+	}
+	webAuthnCredentialController := controller.WebAuthnCredentialController{
 		WebAuthnAPI:     webAuthn,
 		UserRepository:  userRepository,
 		WebAuthnSession: webAuthnSession,
@@ -45,9 +51,10 @@ func NewServer() (*Server, error) {
 		UserSession:    userSession,
 	}
 	server := &Server{
-		router:             echoEcho,
-		webauthnController: webAuthnController,
-		passwordController: passwordController,
+		router:                       echoEcho,
+		webauthnAssertionsController: webAuthnAssertionsController,
+		webauthnCredentialController: webAuthnCredentialController,
+		passwordController:           passwordController,
 	}
 	return server, nil
 }

@@ -10,7 +10,8 @@ import (
 
 type Server struct {
 	router             *echo.Echo
-	webauthnController controller.WebAuthnController
+	webauthnAssertionsController controller.WebAuthnAssertionsController
+	webauthnCredentialController controller.WebAuthnCredentialController
 	passwordController controller.PasswordController
 }
 
@@ -39,13 +40,13 @@ func (s *Server) registerEndpoints() {
 	s.router.FileFS("/home", "index.html", distIndexHTML, middleware.Auth)
 	s.router.FileFS("/passkeys", "index.html", distIndexHTML, middleware.Auth)
 
-	s.router.POST("/register/begin", s.webauthnController.BeginRegistration())
-	s.router.POST("/register/finish", s.webauthnController.FinishRegistration())
-	s.router.POST("/login/begin", s.webauthnController.BeginLogin())
-	s.router.POST("/login/finish", s.webauthnController.FinishLogin())
+	s.router.POST("/register/begin", s.webauthnCredentialController.BeginRegistration())
+	s.router.POST("/register/finish", s.webauthnCredentialController.FinishRegistration())
+	s.router.POST("/login/begin", s.webauthnAssertionsController.BeginLogin())
+	s.router.POST("/login/finish", s.webauthnAssertionsController.FinishLogin())
 
-	s.router.POST("/discoverable_login/begin", s.webauthnController.BeginDiscoverableLogin())
-	s.router.POST("/discoverable_login/finish", s.webauthnController.FinishDiscoverableLogin())
+	s.router.POST("/discoverable_login/begin", s.webauthnAssertionsController.BeginDiscoverableLogin())
+	s.router.POST("/discoverable_login/finish", s.webauthnAssertionsController.FinishDiscoverableLogin())
 
 	s.router.POST("/register/password", s.passwordController.SignUp())
 	s.router.POST("/login/password", s.passwordController.Login())
