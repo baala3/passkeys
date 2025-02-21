@@ -5,7 +5,7 @@ export type AuthResponse = {
 
 export type Passkey = {
   aaguid: string;
-  sign_count: number;
+  credential_id: string;
   created_at: string;
   updated_at: string;
 };

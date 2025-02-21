@@ -43,7 +43,7 @@ func (s *Server) registerEndpoints() {
 	s.router.POST("/register/begin", s.webauthnCredentialController.BeginRegistration(), middleware.ConditionalAuth)
 	s.router.POST("/register/finish", s.webauthnCredentialController.FinishRegistration(), middleware.ConditionalAuth)
 	s.router.GET("/credentials", s.webauthnCredentialController.GetCredentials(), middleware.Auth)
-
+	s.router.DELETE("/credentials", s.webauthnCredentialController.DeleteCredential(), middleware.Auth)
 
 	s.router.POST("/login/begin", s.webauthnAssertionsController.BeginLogin())
 	s.router.POST("/login/finish", s.webauthnAssertionsController.FinishLogin())

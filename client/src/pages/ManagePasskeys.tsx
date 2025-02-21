@@ -30,7 +30,20 @@ export default function ManagePasskeys(): React.ReactElement {
   }
 
   async function handleRegisterUser() {
-    await registerUser("", navigate, setNotification);
+    await registerUser("", "none", navigate, setNotification);
+  }
+
+  async function handleDeletePasskey(credentialId: string) {
+    const response = await fetch(`/credentials`, {
+      method: "DELETE",
+      body: JSON.stringify({ credentialId: credentialId }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (response.ok) {
+      window.location.reload();
+    }
   }
 
   return (
@@ -49,9 +62,9 @@ export default function ManagePasskeys(): React.ReactElement {
       <HorizontalLine />
       {registeredPasskeys.map((passkey) => (
         <div>
-          <div key={passkey.aaguid} className="grid grid-cols-2 gap-4">
+          <div key={passkey.credential_id} className="grid grid-cols-2 gap-4">
             <div>
-              <div className="font-bold">{passkey.aaguid}</div>
+              <div className="font-bold">{passkey.credential_id}</div>
               <div className="font-light text-xs text-gray-400">
                 <p>Registered: {formatDate(passkey.created_at)}</p>
                 <p>Last-Used: {formatDate(passkey.updated_at)}</p>
@@ -59,7 +72,7 @@ export default function ManagePasskeys(): React.ReactElement {
             </div>
             <div>
               <LinkButton
-                onClickFunc={() => alert("Not implemented yet!")}
+                onClickFunc={() => handleDeletePasskey(passkey.credential_id)}
                 buttonText="Delete"
               />
             </div>

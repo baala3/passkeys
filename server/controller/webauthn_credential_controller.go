@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"encoding/base64"
 	"errors"
 	"net/http"
 
@@ -19,17 +20,6 @@ type WebAuthnCredentialController struct {
 	UserRepository repository.UserRepository
 	WebAuthnSession pkg.WebAuthnSession
 	UserSession pkg.UserSession
-}
-
-func (pc *WebAuthnCredentialController) GetCredentials() echo.HandlerFunc {
-	return func(ctx echo.Context) error {
-		user := concerns.CurrentUser(ctx, pc.UserRepository)
-		if user == nil {
-			return pkg.SendError(ctx, errors.New("user not found"), http.StatusUnauthorized)
-		}
-		credentials := user.GetWebAuthnCredentials()
-		return ctx.JSON(http.StatusOK, credentials)
-	}
 }
 
 func (pc *WebAuthnCredentialController) BeginRegistration() echo.HandlerFunc {
@@ -121,6 +111,46 @@ func (pc *WebAuthnCredentialController) FinishRegistration() echo.HandlerFunc {
 
 		if err := pc.UserSession.Create(ctx, user.ID); err != nil {
 			_ = pc.UserRepository.DeleteUser(ctx.Request().Context(), user)
+			return pkg.SendError(ctx, err, http.StatusInternalServerError)
+		}
+		return pkg.SendOK(ctx)
+	}
+}
+
+func (pc *WebAuthnCredentialController) GetCredentials() echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		user := concerns.CurrentUser(ctx, pc.UserRepository)
+		if user == nil {
+			return pkg.SendError(ctx, errors.New("user not found"), http.StatusUnauthorized)
+		}
+		credentials := user.GetWebAuthnCredentials()
+		return ctx.JSON(http.StatusOK, credentials)
+	}
+}
+
+func (pc *WebAuthnCredentialController) DeleteCredential() echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		type Request struct {
+			CredentialID string `json:"credentialId"` 
+		}
+		var request Request
+
+		if err := ctx.Bind(&request); err != nil {
+			return pkg.SendError(ctx, err, http.StatusBadRequest)
+		}
+
+		// Decode the base64 credential ID back to bytes
+		credentialID, err := base64.StdEncoding.DecodeString(request.CredentialID)
+		if err != nil {
+			return pkg.SendError(ctx, err, http.StatusBadRequest)
+		}
+
+		user := concerns.CurrentUser(ctx, pc.UserRepository)
+		if user == nil {
+			return pkg.SendError(ctx, errors.New("user not found"), http.StatusUnauthorized)
+		}
+		err = pc.UserRepository.DeleteWebauthnCredential(ctx.Request().Context(),user.ID, credentialID)
+		if err != nil {
 			return pkg.SendError(ctx, err, http.StatusInternalServerError)
 		}
 		return pkg.SendOK(ctx)

@@ -17,7 +17,7 @@ export async function registerUser(
   navigate: NavigateFunction,
   setNotification: (notification: string) => void
 ) {
-  if (context !== "signup" && !isValidEmail(email)) {
+  if (context === "signup" && !isValidEmail(email)) {
     setNotification("Please enter your email.");
     return;
   }
@@ -63,7 +63,11 @@ export async function registerUser(
 
   if (verificationJSON.status === "ok") {
     setNotification("Successfully registered.");
-    navigate("/home");
+    if (context === "signup") {
+      navigate("/home");
+    } else {
+      window.location.reload();
+    }
   } else {
     setNotification("Registration failed.");
   }

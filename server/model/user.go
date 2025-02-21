@@ -66,7 +66,7 @@ func (u *User) GetWebAuthnCredentials() []pkg.WebAuthnCredentials {
 	for i, cred := range u.WebauthnCredentials {
 		credentials[i] = pkg.WebAuthnCredentials{
 			AAGUID: cred.Authenticator.AAGUID,
-			SignCount: cred.Authenticator.SignCount,
+			CredentialId: cred.CredentialID,
 			CreatedAt: cred.CreatedAt,
 			UpdatedAt: cred.UpdatedAt, // TODO: Add last used at
 		}

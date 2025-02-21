@@ -9,7 +9,7 @@ import (
 
 type WebAuthnCredentials struct {
 	AAGUID []byte `json:"aaguid" bun:"aaguid"`
-	SignCount uint32 `json:"sign_count" bun:"sign_count"`
+	CredentialId []byte `json:"credential_id" bun:"credential_id"`
 	CreatedAt time.Time `json:"created_at" bun:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" bun:"updated_at"`
 }
