@@ -1,6 +1,8 @@
 package model
 
 import (
+	"time"
+
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/google/uuid"
@@ -16,4 +18,6 @@ type WebauthnCredentials struct {
 	Transport []protocol.AuthenticatorTransport `json:"transport" bun:"transport,array"`
 	Flags webauthn.CredentialFlags `json:"flags" bun:"flags"`
 	Authenticator webauthn.Authenticator `json:"authenticator" bun:"authenticator"`
+	CreatedAt time.Time `json:"created_at" bun:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" bun:"updated_at"`
 }

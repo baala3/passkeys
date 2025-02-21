@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/baala3/passkeys/pkg"
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/google/uuid"
@@ -52,6 +53,22 @@ func (u *User) WebAuthnCredentials() []webauthn.Credential {
 			AttestationType: cred.AttestationType,
 			Transport: cred.Transport,
 			Flags: cred.Flags,
+		}
+	}
+	return credentials
+}
+
+func (u *User) GetWebAuthnCredentials() []pkg.WebAuthnCredentials {
+	if u.WebauthnCredentials == nil {
+		return nil
+	}
+	credentials := make([]pkg.WebAuthnCredentials, len(u.WebauthnCredentials))
+	for i, cred := range u.WebauthnCredentials {
+		credentials[i] = pkg.WebAuthnCredentials{
+			AAGUID: cred.Authenticator.AAGUID,
+			SignCount: cred.Authenticator.SignCount,
+			CreatedAt: cred.CreatedAt,
+			UpdatedAt: cred.UpdatedAt,
 		}
 	}
 	return credentials

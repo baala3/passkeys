@@ -9,6 +9,7 @@ import (
 	"github.com/baala3/passkeys/repository"
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/random"
 )
@@ -18,6 +19,34 @@ type WebAuthnCredentialController struct {
 	UserRepository repository.UserRepository
 	WebAuthnSession pkg.WebAuthnSession
 	UserSession pkg.UserSession
+}
+
+func (pc *WebAuthnCredentialController) GetCredentials() echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		userID := ctx.Get("userID").(string)
+		if userID == "" {
+			return pkg.SendError(ctx, errors.New("userID not found"), http.StatusUnauthorized)
+		}
+
+		parsedUUID, err := uuid.Parse(userID)
+		if err != nil {
+			return pkg.SendError(ctx, errors.New("invalid UUID format"), http.StatusBadRequest)
+		}
+
+		userIDBytes, err := parsedUUID.MarshalBinary()
+		if err != nil {
+			return pkg.SendError(ctx, errors.New("failed to marshal UUID"), http.StatusInternalServerError)
+		}
+
+		user, err := pc.UserRepository.FindUserById(ctx.Request().Context(), userIDBytes)
+		if err != nil {
+			return pkg.SendError(ctx, err, http.StatusInternalServerError)
+		}
+
+		credentials := user.GetWebAuthnCredentials()
+		
+		return ctx.JSON(http.StatusOK, credentials)
+	}
 }
 
 func (pc *WebAuthnCredentialController) BeginRegistration() echo.HandlerFunc {

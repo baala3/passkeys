@@ -2,9 +2,17 @@ package pkg
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 )
+
+type WebAuthnCredentials struct {
+	AAGUID []byte `json:"aaguid" bun:"aaguid"`
+	SignCount uint32 `json:"sign_count" bun:"sign_count"`
+	CreatedAt time.Time `json:"created_at" bun:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" bun:"updated_at"`
+}
 
 type Params struct {
 	Email string
