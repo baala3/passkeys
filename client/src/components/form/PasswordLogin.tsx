@@ -47,7 +47,7 @@ export function PasswordLogin(): React.ReactElement {
         Sign in with your password
       </h2>
       <div className="space-y-6">
-        <div className="text-sm text-center min-h-5 font-normal text-blue-400">
+        <div className="text-sm text-center min-h-8 font-normal text-blue-400">
           {notification}
         </div>
         <Input

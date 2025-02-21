@@ -49,7 +49,7 @@ export default function ManagePasskeys(): React.ReactElement {
   return (
     <Layout>
       <Heading>Manage Passkeys</Heading>
-      <div className="text-sm text-center min-h-5 font-normal text-blue-400">
+      <div className="text-sm text-center min-h-8 font-normal text-blue-400">
         {notification}
       </div>
       <Button
@@ -62,10 +62,20 @@ export default function ManagePasskeys(): React.ReactElement {
       <HorizontalLine />
       {registeredPasskeys.map((passkey) => (
         <div>
-          <div key={passkey.credential_id} className="grid grid-cols-2 gap-4">
+          <div
+            key={passkey.authenticator_metadata.name}
+            className="grid grid-cols-2 gap-2 items-center"
+          >
             <div>
-              <div className="font-bold">{passkey.credential_id}</div>
-              <div className="font-light text-xs text-gray-400">
+              <div className="font-bold flex items-center gap-2">
+                <img
+                  src={passkey.authenticator_metadata.icon_light}
+                  alt={passkey.authenticator_metadata.name}
+                  className="w-6 h-6"
+                />
+                {passkey.authenticator_metadata.name}
+              </div>
+              <div className="font-light text-xs text-gray-400 mt-1">
                 <p>Registered: {formatDate(passkey.created_at)}</p>
                 <p>Last-Used: {formatDate(passkey.updated_at)}</p>
               </div>
