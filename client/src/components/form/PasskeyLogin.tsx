@@ -1,73 +1,16 @@
 import React, { useState } from "react";
-import { startAuthentication } from "@simplewebauthn/browser";
-import {
-  AuthenticationResponseJSON,
-  PublicKeyCredentialCreationOptionsJSON,
-} from "@simplewebauthn/types";
 import { Button } from "../input/Button";
 import { Input } from "../input/Input";
-import { isValidEmail } from "../../utils/shared";
-import { AuthResponse } from "../../utils/types";
 import { useNavigate } from "react-router-dom";
+import { loginUser } from "../../hooks/webauth_api";
 
 export function PasskeyLogin(): React.ReactElement {
   const [email, setEmail] = useState("");
   const [notification, setNotification] = useState("");
   const navigate = useNavigate();
 
-  async function loginUser() {
-    if (!isValidEmail(email)) {
-      setNotification("Please enter your email.");
-      return;
-    }
-
-    const response = await fetch(`/login/begin`, {
-      method: "POST",
-      body: JSON.stringify({ email }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    const credentialRequestOptions: {
-      publicKey: PublicKeyCredentialCreationOptionsJSON;
-    } = await response.json();
-    let assertion: AuthenticationResponseJSON;
-    try {
-      assertion = await startAuthentication({
-        optionsJSON: credentialRequestOptions.publicKey,
-      });
-    } catch (error) {
-      if (error instanceof Error) {
-        switch (error.name) {
-          case "TypeError":
-            setNotification(
-              "There is no passkey associated with this account."
-            );
-            break;
-          case "AbortError":
-            break;
-          default:
-            setNotification("An error occurred. Please try again.");
-        }
-      }
-      return;
-    }
-
-    const verificationResponse = await fetch(`/login/finish`, {
-      method: "POST",
-      body: JSON.stringify(assertion),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    const verificationJSON: AuthResponse = await verificationResponse.json();
-    if (verificationJSON.status === "ok") {
-      setNotification("Successfully logged in.");
-      navigate("/home");
-    } else {
-      setNotification("Login failed.");
-    }
+  async function handleLoginUser() {
+    await loginUser(email, navigate, setNotification);
   }
 
   return (
@@ -88,7 +31,7 @@ export function PasskeyLogin(): React.ReactElement {
           onChange={setEmail}
         />
 
-        <Button onClickFunc={loginUser} buttonText="Sign in" />
+        <Button onClickFunc={handleLoginUser} buttonText="Sign in" />
       </div>
     </>
   );

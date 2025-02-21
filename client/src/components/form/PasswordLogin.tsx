@@ -1,70 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { startAuthentication } from "@simplewebauthn/browser";
-import {
-  AuthenticationResponseJSON,
-  PublicKeyCredentialCreationOptionsJSON,
-} from "@simplewebauthn/types";
 import { AuthResponse } from "../../utils/types";
 import { Button } from "../input/Button";
 import { Input } from "../input/Input";
 import { useNavigate } from "react-router-dom";
+import { passkeyAutofill } from "../../hooks/webauth_api";
+
 export function PasswordLogin(): React.ReactElement {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [notification, setNotification] = useState("");
   const navigate = useNavigate();
   useEffect(() => {
-    passkeyAutofill();
+    passkeyAutofill(email, navigate, setNotification);
   }, []);
-
-  async function passkeyAutofill() {
-    const response = await fetch(`/discoverable_login/begin`, {
-      method: "POST",
-      body: JSON.stringify({ email }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    const credentialRequestOptions: {
-      publicKey: PublicKeyCredentialCreationOptionsJSON;
-    } = await response.json();
-    let assertion: AuthenticationResponseJSON;
-    try {
-      assertion = await startAuthentication({
-        optionsJSON: credentialRequestOptions.publicKey,
-        useBrowserAutofill: true,
-      });
-    } catch (error) {
-      if (error instanceof Error) {
-        switch (error.name) {
-          case "TypeError":
-            setNotification("An account with that email does not exist.");
-            break;
-          case "AbortError":
-            break;
-          default:
-            setNotification("An error occurred. Please try again.");
-        }
-      }
-      return;
-    }
-
-    const verificationResponse = await fetch(`/discoverable_login/finish`, {
-      method: "POST",
-      body: JSON.stringify(assertion),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    const verificationJSON: AuthResponse = await verificationResponse.json();
-    if (verificationJSON.status === "ok") {
-      setNotification("Successfully logged in.");
-      navigate("/home");
-    } else {
-      setNotification("Login failed.");
-    }
-  }
 
   async function loginUser() {
     if (email === "") {
