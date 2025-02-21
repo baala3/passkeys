@@ -5,11 +5,11 @@ import (
 	"net/http"
 
 	"github.com/alexedwards/argon2id"
+	"github.com/baala3/passkeys/concerns"
 	"github.com/baala3/passkeys/pkg"
 	"github.com/baala3/passkeys/repository"
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/random"
 )
@@ -23,28 +23,11 @@ type WebAuthnCredentialController struct {
 
 func (pc *WebAuthnCredentialController) GetCredentials() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		userID := ctx.Get("userID").(string)
-		if userID == "" {
-			return pkg.SendError(ctx, errors.New("userID not found"), http.StatusUnauthorized)
+		user := concerns.CurrentUser(ctx, pc.UserRepository)
+		if user == nil {
+			return pkg.SendError(ctx, errors.New("user not found"), http.StatusUnauthorized)
 		}
-
-		parsedUUID, err := uuid.Parse(userID)
-		if err != nil {
-			return pkg.SendError(ctx, errors.New("invalid UUID format"), http.StatusBadRequest)
-		}
-
-		userIDBytes, err := parsedUUID.MarshalBinary()
-		if err != nil {
-			return pkg.SendError(ctx, errors.New("failed to marshal UUID"), http.StatusInternalServerError)
-		}
-
-		user, err := pc.UserRepository.FindUserById(ctx.Request().Context(), userIDBytes)
-		if err != nil {
-			return pkg.SendError(ctx, err, http.StatusInternalServerError)
-		}
-
 		credentials := user.GetWebAuthnCredentials()
-		
 		return ctx.JSON(http.StatusOK, credentials)
 	}
 }
@@ -60,20 +43,17 @@ func (pc *WebAuthnCredentialController) BeginRegistration() echo.HandlerFunc {
 			return pkg.SendError(ctx, errors.New("Invalid email"), http.StatusBadRequest)
 		}
 
-	_, err := pc.UserRepository.FindUserByEmail(ctx.Request().Context(), p.Email)
+	user, err := pc.UserRepository.FindUserByEmail(ctx.Request().Context(), p.Email)
 
-	if err == nil {
-		return pkg.SendError(ctx, errors.New("An account with that email already exists."), http.StatusConflict)
-	}
-
-	passwordHash, err := argon2id.CreateHash(random.String(20), argon2id.DefaultParams)
-	if err != nil {
-		return pkg.SendError(ctx, errors.New("Internal server error"), http.StatusInternalServerError)
-	}
-
-	user, err := pc.UserRepository.CreateUser(ctx.Request().Context(), p.Email, passwordHash)
-	if err != nil {
-		return pkg.SendError(ctx, err, http.StatusInternalServerError)
+	if user == nil {
+		passwordHash, err := argon2id.CreateHash(random.String(20), argon2id.DefaultParams)
+		if err != nil {
+			return pkg.SendError(ctx, errors.New("Internal server error"), http.StatusInternalServerError)
+		}
+		user, err = pc.UserRepository.CreateUser(ctx.Request().Context(), p.Email, passwordHash)
+		if err != nil {
+			return pkg.SendError(ctx, err, http.StatusInternalServerError)
+		}
 	}
 
 	authSelect := protocol.AuthenticatorSelection{
