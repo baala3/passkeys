@@ -2,15 +2,15 @@ import React, { useState } from "react";
 import { Button } from "../input/Button";
 import { Input } from "../input/Input";
 import { useNavigate } from "react-router-dom";
-import { loginUser } from "../../hooks/webauth_api";
+import { loginPasskey } from "../../hooks/webauth_api";
 
 export function PasskeyLogin(): React.ReactElement {
   const [email, setEmail] = useState("");
   const [notification, setNotification] = useState("");
   const navigate = useNavigate();
 
-  async function handleLoginUser() {
-    await loginUser(email, navigate, setNotification);
+  async function handleLoginPasskey() {
+    await loginPasskey(email, navigate, setNotification);
   }
 
   return (
@@ -31,7 +31,7 @@ export function PasskeyLogin(): React.ReactElement {
           onChange={setEmail}
         />
 
-        <Button onClickFunc={handleLoginUser} buttonText="Sign in" />
+        <Button onClickFunc={handleLoginPasskey} buttonText="Sign in" />
       </div>
     </>
   );

@@ -5,10 +5,9 @@ import { Button } from "../components/input/Button";
 import { Heading } from "../components/layout/Heading";
 import { HorizontalLine } from "../components/layout/HorizontalLine";
 import { Passkey } from "../utils/types";
-import DateObject from "react-date-object";
 import { useNavigate } from "react-router-dom";
-import { registerUser } from "../hooks/webauth_api";
-
+import { registerPasskey, deletePasskey } from "../hooks/webauth_api";
+import { formatDate } from "../utils/shared";
 export default function ManagePasskeys(): React.ReactElement {
   const [registeredPasskeys, setRegisteredPasskeys] = useState<Passkey[]>([]);
   const [notification, setNotification] = useState("");
@@ -24,26 +23,12 @@ export default function ManagePasskeys(): React.ReactElement {
     setRegisteredPasskeys(passkeys);
   }
 
-  function formatDate(date: string) {
-    const dateObject = new DateObject({ date: new Date(date).toISOString() });
-    return dateObject.format("DD MMM YY, hh:mm a");
-  }
-
-  async function handleRegisterUser() {
-    await registerUser("", "none", navigate, setNotification);
+  async function handleRegisterPasskey() {
+    await registerPasskey("", "normal", navigate, setNotification);
   }
 
   async function handleDeletePasskey(credentialId: string) {
-    const response = await fetch(`/credentials`, {
-      method: "DELETE",
-      body: JSON.stringify({ credentialId: credentialId }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    if (response.ok) {
-      window.location.reload();
-    }
+    await deletePasskey(credentialId);
   }
 
   return (
@@ -53,7 +38,7 @@ export default function ManagePasskeys(): React.ReactElement {
         {notification}
       </div>
       <Button
-        onClickFunc={() => handleRegisterUser()}
+        onClickFunc={handleRegisterPasskey}
         buttonText="Register a passkey"
       />
       <div className="font-light text-xs mt-2">

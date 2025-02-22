@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Button } from "../input/Button";
 import { Input } from "../input/Input";
-import { registerUser } from "../../hooks/webauth_api";
+import { registerPasskey } from "../../hooks/webauth_api";
 import { useNavigate } from "react-router-dom";
 
 export function PasskeySignUp(): React.ReactElement {
@@ -9,8 +9,8 @@ export function PasskeySignUp(): React.ReactElement {
   const [notification, setNotification] = useState("");
   const navigate = useNavigate();
 
-  async function handleRegisterUser() {
-    await registerUser(email, "signup", navigate, setNotification);
+  async function handleRegisterPasskey() {
+    await registerPasskey(email, "signup", navigate, setNotification);
   }
 
   return (
@@ -31,7 +31,7 @@ export function PasskeySignUp(): React.ReactElement {
           onChange={setEmail}
         />
 
-        <Button onClickFunc={handleRegisterUser} buttonText="Sign up" />
+        <Button onClickFunc={handleRegisterPasskey} buttonText="Sign up" />
       </div>
     </>
   );

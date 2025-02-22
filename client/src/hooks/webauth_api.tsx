@@ -11,7 +11,7 @@ import { isValidEmail } from "../utils/shared";
 import { AuthResponse } from "../utils/types";
 import { NavigateFunction } from "react-router-dom";
 
-export async function registerUser(
+export async function registerPasskey(
   email: string,
   context: string = "none",
   navigate: NavigateFunction,
@@ -73,7 +73,7 @@ export async function registerUser(
   }
 }
 
-export async function loginUser(
+export async function loginPasskey(
   email: string,
   navigate: NavigateFunction,
   setNotification: (notification: string) => void
@@ -180,5 +180,18 @@ export async function passkeyAutofill(
     navigate("/home");
   } else {
     setNotification("Login failed.");
+  }
+}
+
+export async function deletePasskey(credentialId: string) {
+  const response = await fetch(`/credentials`, {
+    method: "DELETE",
+    body: JSON.stringify({ credentialId: credentialId }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  if (response.ok) {
+    window.location.reload();
   }
 }
