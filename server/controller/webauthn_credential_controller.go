@@ -7,6 +7,7 @@ import (
 
 	"github.com/alexedwards/argon2id"
 	"github.com/baala3/passkeys/concerns"
+	"github.com/baala3/passkeys/model"
 	"github.com/baala3/passkeys/pkg"
 	"github.com/baala3/passkeys/repository"
 	"github.com/go-webauthn/webauthn/protocol"
@@ -24,32 +25,9 @@ type WebAuthnCredentialController struct {
 
 func (pc *WebAuthnCredentialController) BeginRegistration() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		var p pkg.Params
-		if err := ctx.Bind(&p); err != nil {
-			return pkg.SendError(ctx, err, http.StatusBadRequest)
-		}
-
-		if (p == pkg.Params{}) {
-			user := concerns.CurrentUser(ctx, pc.UserRepository)
-			if user == nil {
-				return pkg.SendError(ctx, errors.New("no user found"), http.StatusBadRequest)
-			}
-			p = pkg.Params{
-				Email: user.Email,
-			}
-		}
-
-		user, err := pc.UserRepository.FindUserByEmail(ctx.Request().Context(), p.Email)
-
-		if user == nil {
-			passwordHash, err := argon2id.CreateHash(random.String(20), argon2id.DefaultParams)
-			if err != nil {
-				return pkg.SendError(ctx, errors.New("Internal server error"), http.StatusInternalServerError)
-			}
-			user, err = pc.UserRepository.CreateUser(ctx.Request().Context(), p.Email, passwordHash)
-			if err != nil {
-				return pkg.SendError(ctx, err, http.StatusInternalServerError)
-			}
+		user, err, status := pc.getContextBasedUser(ctx)
+		if err != nil {
+			return pkg.SendError(ctx, err, status)
 		}
 
 		authSelect := protocol.AuthenticatorSelection{
@@ -155,4 +133,40 @@ func (pc *WebAuthnCredentialController) DeleteCredential() echo.HandlerFunc {
 		}
 		return pkg.SendOK(ctx)
 	}
+}
+
+func (pc *WebAuthnCredentialController) getContextBasedUser(ctx echo.Context) (user *model.User, err error, status int) {
+		context := ctx.QueryParam("context")
+
+		switch context {
+		case "signup":
+			var p pkg.Params
+			if err := ctx.Bind(&p); err != nil {
+				return nil, err, http.StatusBadRequest
+			}
+			user, err := pc.UserRepository.FindUserByEmail(ctx.Request().Context(), p.Email)
+
+			if user != nil {
+				return nil, errors.New("user already exists"), http.StatusBadRequest
+			}
+
+			// Generate a random password hash to create a user
+			passwordHash, err := argon2id.CreateHash(random.String(20), argon2id.DefaultParams)
+			if err != nil {
+				return nil, err, http.StatusInternalServerError
+			}
+			user, err = pc.UserRepository.CreateUser(ctx.Request().Context(), p.Email, passwordHash)
+			if err != nil {
+				return nil, err, http.StatusInternalServerError
+			}
+			return user, nil, http.StatusOK
+		case "normal":
+			user = concerns.CurrentUser(ctx, pc.UserRepository)
+			if user == nil {
+				return nil, errors.New("user not found"), http.StatusUnauthorized
+			}
+			return user, nil, http.StatusOK
+		default:
+			return nil, errors.New("invalid context"), http.StatusBadRequest
+		}
 }
