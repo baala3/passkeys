@@ -47,3 +47,22 @@ func Auth(next echo.HandlerFunc) echo.HandlerFunc {
 		return next(ctx)
 	}
 }
+
+func NoAuth(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		redisClient:= ctx.Get("redisClient").(*redis.Client)
+		if redisClient == nil {
+			return next(ctx)
+		}
+		cookie, err := ctx.Cookie("auth")
+		if err != nil {
+			return next(ctx)
+		}
+		sessionID := cookie.Value
+		userID, err := redisClient.Get(context.Background(), sessionID).Result()
+		if err == redis.Nil || err != nil || userID == "" {
+			return next(ctx)
+		}
+		return ctx.Redirect(http.StatusFound, "/home")
+	}
+}

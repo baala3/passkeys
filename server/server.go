@@ -35,8 +35,8 @@ func (s *Server) registerEndpoints() {
 
 	s.router.StaticFS("/", distDirFS)
 
-	s.router.FileFS("/", "index.html", distIndexHTML)
-	s.router.FileFS("/sign-up", "index.html", distIndexHTML)
+	s.router.FileFS("/", "index.html", distIndexHTML, middleware.NoAuth)
+	s.router.FileFS("/sign-up", "index.html", distIndexHTML, middleware.NoAuth)
 	s.router.FileFS("/home", "index.html", distIndexHTML, middleware.Auth)
 	s.router.FileFS("/passkeys", "index.html", distIndexHTML, middleware.Auth)
 
@@ -45,12 +45,12 @@ func (s *Server) registerEndpoints() {
 	s.router.GET("/credentials", s.webauthnCredentialController.GetCredentials(), middleware.Auth)
 	s.router.DELETE("/credentials", s.webauthnCredentialController.DeleteCredential(), middleware.Auth)
 
-	s.router.POST("/login/begin", s.webauthnAssertionsController.BeginLogin())
-	s.router.POST("/login/finish", s.webauthnAssertionsController.FinishLogin())
-	s.router.POST("/discoverable_login/begin", s.webauthnAssertionsController.BeginDiscoverableLogin())
-	s.router.POST("/discoverable_login/finish", s.webauthnAssertionsController.FinishDiscoverableLogin())
+	s.router.POST("/login/begin", s.webauthnAssertionsController.BeginLogin(), middleware.NoAuth)
+	s.router.POST("/login/finish", s.webauthnAssertionsController.FinishLogin(), middleware.NoAuth)
+	s.router.POST("/discoverable_login/begin", s.webauthnAssertionsController.BeginDiscoverableLogin(), middleware.NoAuth)
+	s.router.POST("/discoverable_login/finish", s.webauthnAssertionsController.FinishDiscoverableLogin(), middleware.NoAuth)
 
-	s.router.POST("/register/password", s.passwordController.SignUp())
-	s.router.POST("/login/password", s.passwordController.Login())
-	s.router.POST("/logout", s.passwordController.Logout())
+	s.router.POST("/register/password", s.passwordController.SignUp(), middleware.NoAuth)
+	s.router.POST("/login/password", s.passwordController.Login(), middleware.NoAuth)
+	s.router.POST("/logout", s.passwordController.Logout(), middleware.Auth)
 }
