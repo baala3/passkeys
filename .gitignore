@@ -1,4 +1,4 @@
-server/db/data
+server/data/
 server/tmp
 .DS_Store
 

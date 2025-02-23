@@ -3,12 +3,14 @@ services:
     image: redis:latest
     ports:
       - 16379:6379
+    volumes:
+      - ./server/data/services/redis/:/data
   postgres:
     image: postgres:latest
     ports:
       - 15432:5432
     volumes:
-      - ./server/db/data/:/var/lib/postgresql/data
+      - ./server/data/services/postgres/:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
