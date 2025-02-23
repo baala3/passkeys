@@ -53,4 +53,5 @@ func (s *Server) registerEndpoints() {
 	s.router.POST("/register/password", s.passwordController.SignUp(), middleware.NoAuth)
 	s.router.POST("/login/password", s.passwordController.Login(), middleware.NoAuth)
 	s.router.POST("/logout", s.passwordController.Logout(), middleware.Auth)
+	s.router.DELETE("/delete_account", s.passwordController.DeleteAccount(), middleware.Auth)
 }

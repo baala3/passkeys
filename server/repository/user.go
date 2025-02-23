@@ -115,3 +115,25 @@ func (ur *UserRepository) FindUserIDByCredentialID(ctx context.Context, credenti
 	}
 	return &credential.UserID, nil
 }
+
+func (ur *UserRepository) DeleteUserWithWebauthnCredentials(ctx context.Context, user *model.User) error {
+	err := ur.DB.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		// Delete webauthn credentials first (foreign key dependency)
+		_, err := tx.NewDelete().
+			Model(&model.WebauthnCredentials{}).
+			Where("user_id = ?", user.ID).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+
+		// Delete the user
+		_, err = tx.NewDelete().
+			Model(user).
+			WherePK().
+			Exec(ctx)
+		return err
+	})
+
+	return err
+}

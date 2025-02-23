@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/alexedwards/argon2id"
+	"github.com/baala3/passkeys/concerns"
 	"github.com/baala3/passkeys/pkg"
 	"github.com/baala3/passkeys/repository"
 	"github.com/labstack/echo/v4"
@@ -101,6 +102,27 @@ func (pc PasswordController) Logout() echo.HandlerFunc {
 		sessionID := cookie.Value
 		pc.UserSession.Delete(ctx, sessionID)
 
+		return pkg.SendOK(ctx)
+	}
+}
+
+func (pc PasswordController) DeleteAccount() echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		cookie, err := ctx.Cookie("auth")
+		if err != nil {
+			return pkg.SendError(ctx, errors.New("Not logged in."), http.StatusUnauthorized)
+		}
+		sessionID := cookie.Value
+		pc.UserSession.Delete(ctx, sessionID)
+
+		user := concerns.CurrentUser(ctx, pc.UserRepository)
+		if user == nil {
+			return pkg.SendError(ctx, errors.New("User not found"), http.StatusNotFound)
+		}
+		err = pc.UserRepository.DeleteUserWithWebauthnCredentials(ctx.Request().Context(), user)
+		if err != nil {
+			return pkg.SendError(ctx, err, http.StatusInternalServerError)
+		}
 		return pkg.SendOK(ctx)
 	}
 }
