@@ -4,10 +4,12 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/baala3/passkeys/pkg"
 	"github.com/labstack/echo/v4"
 	"github.com/redis/go-redis/v9"
 )
 
+// ConditionalAuth allows passkey-signup without authentication, otherwise applies Auth middleware
 func ConditionalAuth(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		context := c.QueryParam("context")
@@ -20,10 +22,10 @@ func ConditionalAuth(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
+// Auth middleware ensures user is authenticated
 func Auth(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		redisClient:= ctx.Get("redisClient").(*redis.Client)
-
+		redisClient := pkg.GetRedisClient()
 		if redisClient == nil {
 			return ctx.Redirect(http.StatusFound, "/")
 		}
@@ -48,9 +50,10 @@ func Auth(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
+// NoAuth ensures the user is NOT authenticated
 func NoAuth(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		redisClient:= ctx.Get("redisClient").(*redis.Client)
+		redisClient := pkg.GetRedisClient()
 		if redisClient == nil {
 			return next(ctx)
 		}

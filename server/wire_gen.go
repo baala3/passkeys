@@ -16,7 +16,7 @@ import (
 
 // Injectors from wire.go:
 
-// run wire to generate the server
+// run `wire` to generate server and all dependencies
 func NewServer() (*Server, error) {
 	echoEcho := echo.New()
 	webAuthn, err := pkg.NewWebAuthnAPI()

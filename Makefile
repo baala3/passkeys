@@ -16,3 +16,10 @@ dump-db:
 	docker compose down -v # removing all data from the db
 	rm -rf ./server/data/services/postgres/ # removing all data from the db
 	rm -rf ./server/data/services/redis/ # removing all data from the db
+
+dump-data:
+	rm -rf ./server/data/services/postgres/ # removing all data from the db
+	rm -rf ./server/data/services/redis/ # removing all data from the db
+
+wire:
+	cd server && wire

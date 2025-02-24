@@ -12,7 +12,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// run wire to generate the server
+// run `wire` to generate server and all dependencies
 func NewServer() (*Server, error) {
 	panic(wire.Build(
 		wire.Struct(new(Server), "*"),

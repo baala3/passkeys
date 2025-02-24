@@ -31,8 +31,6 @@ var (
 )
 
 func (s *Server) registerEndpoints() {
-	s.router.Use(middleware.InjectRedis)
-
 	s.router.StaticFS("/", distDirFS)
 
 	s.router.FileFS("/", "index.html", distIndexHTML, middleware.NoAuth)
