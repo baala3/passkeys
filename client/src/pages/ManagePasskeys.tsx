@@ -48,17 +48,17 @@ export default function ManagePasskeys(): React.ReactElement {
       {registeredPasskeys.map((passkey) => (
         <div>
           <div
-            key={passkey.authenticator_metadata.name}
+            key={passkey.passkey_provider.name}
             className="grid grid-cols-2 gap-2 items-center"
           >
             <div>
               <div className="font-bold flex items-center gap-2">
                 <img
-                  src={passkey.authenticator_metadata.icon_light}
-                  alt={passkey.authenticator_metadata.name}
+                  src={passkey.passkey_provider.icon_light}
+                  alt={passkey.passkey_provider.name}
                   className="w-6 h-6"
                 />
-                {passkey.authenticator_metadata.name}
+                {passkey.passkey_provider.name}
               </div>
               <div className="font-light text-xs text-gray-400 mt-1">
                 <p>Registered: {formatDate(passkey.created_at)}</p>

@@ -3,14 +3,15 @@ export type AuthResponse = {
   errorMessage: string;
 };
 
-export type AuthenticatorMetadata = {
+export type PasskeyProvider = {
   name: string;
   icon_dark: string;
   icon_light: string;
 };
 
+// for passkey management page
 export type Passkey = {
-  authenticator_metadata: AuthenticatorMetadata;
+  passkey_provider: PasskeyProvider;
   credential_id: string;
   created_at: string;
   updated_at: string;

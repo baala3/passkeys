@@ -2,78 +2,56 @@ package pkg
 
 import (
 	"encoding/json"
-	"net/http"
 	"os"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 )
 
-type WebAuthnCredentials struct {
-	AuthenticatorMetadata AuthenticatorMetadata `json:"authenticator_metadata"`
-	CredentialId []byte `json:"credential_id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
-type Params struct {
-	Email string
-	Password string
-}
-
-type Response struct {
-	Status string `json:"status"`
-	ErrorMessage string `json:"errorMessage"`
-}
-
-func SendError(ctx echo.Context, err error, code int) error {
-	ctx.Logger().Error("Error: %v", err)
-	return ctx.JSON(code, Response{
-		Status:       "error",
-		ErrorMessage: err.Error(),
-	})
-}
-
-func SendOK(ctx echo.Context) error {
-	return ctx.JSON(http.StatusOK, Response{
-		Status:       "ok",
-		ErrorMessage: "",
-	})
-}
-
-type AuthenticatorMetadata struct {
+type PasskeyProvider struct {
     Name      string `json:"name"`
     IconDark  string `json:"icon_dark"`
     IconLight string `json:"icon_light"`
 }
 
-var AAGUIDs map[string]AuthenticatorMetadata
+type WebAuthnCredentials struct {
+	PasskeyProvider PasskeyProvider `json:"passkey_provider"`
+	CredentialId []byte `json:"credential_id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
 
-func initAAGUIDs() error {
+var (
+	AAGUIDs   map[string]PasskeyProvider
+	loadError error
+)
+
+// LoadAAGUIDs should be called explicitly in a specific file
+func LoadAAGUIDs() error {
+	AAGUIDs = make(map[string]PasskeyProvider)
+
 	data, err := os.ReadFile("passkey-authenticator-aaguids/aaguid.json")
 	if err != nil {
+		loadError = err
 		return err
 	}
 
-	err = json.Unmarshal(data, &AAGUIDs)
-	if err != nil {
+	if err := json.Unmarshal(data, &AAGUIDs); err != nil {
+		loadError = err
 		return err
 	}
 
 	return nil
 }
-func GetPasskeyProviderData(aaguid []byte) AuthenticatorMetadata {
-	if AAGUIDs == nil {
-		err := initAAGUIDs()
-		if err != nil {
-			return AuthenticatorMetadata{}
-		}
+
+func GetPasskeyProviderByAAGUID(aaguid []byte) PasskeyProvider {
+	if loadError != nil {
+		return PasskeyProvider{}
 	}
 
 	uuid, err := uuid.FromBytes(aaguid)
 	if err != nil {
-		return AuthenticatorMetadata{}
+		return PasskeyProvider{}
 	}
 
 	return AAGUIDs[uuid.String()]

@@ -60,9 +60,12 @@ func (u *User) WebAuthnCredentials() []webauthn.Credential {
 
 func (u *User) GetWebAuthnCredentials() []pkg.WebAuthnCredentials {
 	credentials := make([]pkg.WebAuthnCredentials, len(u.WebauthnCredentials))
+	if err := pkg.LoadAAGUIDs(); err != nil {
+		return nil
+	}
 	for i, cred := range u.WebauthnCredentials {
 		credentials[i] = pkg.WebAuthnCredentials{
-			AuthenticatorMetadata: pkg.GetPasskeyProviderData(cred.Authenticator.AAGUID),
+			PasskeyProvider: pkg.GetPasskeyProviderByAAGUID(cred.Authenticator.AAGUID),
 			CredentialId: cred.CredentialID,
 			CreatedAt: cred.CreatedAt,
 			UpdatedAt: cred.UpdatedAt, // TODO: Add last used at
