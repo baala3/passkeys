@@ -6,12 +6,12 @@ import { Button } from "../components/input/Button";
 import { isValidEmail } from "../utils/shared";
 import { loginPasskey } from "../hooks/webauth_api";
 export default function EditEmail(): React.ReactElement {
-  const [currentEmail, setCurrentEmail] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [notification, setNotification] = useState("");
 
   async function handleChangeEmail() {
-    if (!emailValidations()) {
+    if (newEmail === "" || !isValidEmail(newEmail)) {
+      setNotification("New email is invalid");
       return;
     }
 
@@ -21,7 +21,7 @@ export default function EditEmail(): React.ReactElement {
       async () => {
         const response = await fetch("/change_email", {
           method: "POST",
-          body: JSON.stringify({ currentEmail, newEmail }),
+          body: JSON.stringify({ email: newEmail }),
           headers: {
             "Content-Type": "application/json",
           },
@@ -36,26 +36,6 @@ export default function EditEmail(): React.ReactElement {
     );
   }
 
-  function emailValidations(): boolean {
-    if (currentEmail === "") {
-      setNotification("Current email is required");
-      return false;
-    }
-    if (newEmail === "") {
-      setNotification("New email is required");
-      return false;
-    }
-    if (!isValidEmail(currentEmail) || !isValidEmail(newEmail)) {
-      setNotification("Invalid email entered");
-      return false;
-    }
-    if (currentEmail === newEmail) {
-      setNotification("Current and new email cannot be the same");
-      return false;
-    }
-    return true;
-  }
-
   return (
     <Layout>
       <div className="text-sm text-center font-normal text-blue-400 mb-4">
@@ -66,12 +46,6 @@ export default function EditEmail(): React.ReactElement {
         Confirm that you have passkey to change your email.
       </p>
       <div className="space-y-6">
-        <Input
-          type="email"
-          placeholder="Current email"
-          value={currentEmail}
-          onChange={setCurrentEmail}
-        />
         <Input
           type="email"
           placeholder="New email"
