@@ -42,7 +42,7 @@ export default function ManagePasskeys(): React.ReactElement {
   return (
     <Layout>
       <Heading>Manage Passkeys</Heading>
-      <div className="text-sm text-center min-h-8 font-normal text-blue-400">
+      <div className="text-sm text-center font-normal text-blue-400 mb-4">
         {notification}
       </div>
       <Button

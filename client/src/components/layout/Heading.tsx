@@ -5,5 +5,5 @@ type Props = {
 };
 
 export function Heading({ children }: Props): React.ReactElement {
-  return <div className="text-4xl font-bold mb-10">{children}</div>;
+  return <div className="text-4xl font-bold mb-8">{children}</div>;
 }

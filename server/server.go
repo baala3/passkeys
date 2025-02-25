@@ -37,7 +37,7 @@ func (s *Server) registerEndpoints() {
 	s.router.FileFS("/sign-up", "index.html", distIndexHTML, middleware.NoAuth)
 	s.router.FileFS("/home", "index.html", distIndexHTML, middleware.Auth)
 	s.router.FileFS("/passkeys", "index.html", distIndexHTML, middleware.Auth)
-
+	s.router.FileFS("/delete_account", "index.html", distIndexHTML, middleware.Auth)
 	s.router.POST("/register/begin", s.webauthnCredentialController.BeginRegistration(), middleware.ConditionalAuth)
 	s.router.POST("/register/finish", s.webauthnCredentialController.FinishRegistration(), middleware.ConditionalAuth)
 	s.router.GET("/credentials", s.webauthnCredentialController.GetCredentials(), middleware.Auth)
