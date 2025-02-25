@@ -5,13 +5,11 @@ import { Button } from "../components/input/Button";
 import { Heading } from "../components/layout/Heading";
 import { HorizontalLine } from "../components/layout/HorizontalLine";
 import { Passkey } from "../utils/types";
-import { useNavigate } from "react-router-dom";
 import { registerPasskey, deletePasskey } from "../hooks/webauth_api";
 import { formatDate } from "../utils/shared";
 export default function ManagePasskeys(): React.ReactElement {
   const [registeredPasskeys, setRegisteredPasskeys] = useState<Passkey[]>([]);
   const [notification, setNotification] = useState("");
-  const navigate = useNavigate();
 
   useEffect(() => {
     getPasskeys();
@@ -24,11 +22,21 @@ export default function ManagePasskeys(): React.ReactElement {
   }
 
   async function handleRegisterPasskey() {
-    await registerPasskey("", "normal", navigate, setNotification);
+    await registerPasskey(
+      "",
+      "normal",
+      () => window.location.reload(),
+      (errorMessage) => setNotification(errorMessage)
+    );
   }
 
   async function handleDeletePasskey(credentialId: string) {
-    await deletePasskey(credentialId);
+    await deletePasskey(
+      credentialId,
+      "normal",
+      () => window.location.reload(),
+      (errorMessage) => setNotification(errorMessage)
+    );
   }
 
   return (

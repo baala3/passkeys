@@ -10,7 +10,12 @@ export function PasskeySignUp(): React.ReactElement {
   const navigate = useNavigate();
 
   async function handleRegisterPasskey() {
-    await registerPasskey(email, "signup", navigate, setNotification);
+    await registerPasskey(
+      email,
+      "signup",
+      () => navigate("/home"),
+      (errorMessage) => setNotification(errorMessage)
+    );
   }
 
   return (

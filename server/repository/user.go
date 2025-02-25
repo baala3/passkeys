@@ -97,26 +97,6 @@ func (ur *UserRepository) DeleteWebauthnCredential(ctx context.Context, userID u
 }
 
 func (ur *UserRepository) DeleteUser(ctx context.Context, user *model.User) error {
-	_, err := ur.DB.NewDelete().
-		Model(user).
-		WherePK().
-		Exec(ctx)
-	return err
-}
-
-func (ur *UserRepository) FindUserIDByCredentialID(ctx context.Context, credentialID []byte) (*uuid.UUID, error) {
-	var credential model.WebauthnCredentials
-	err := ur.DB.NewSelect().
-		Model(&credential).
-		Column("user_id").
-		Where("credential_id = ?", credentialID).Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return &credential.UserID, nil
-}
-
-func (ur *UserRepository) DeleteUserWithWebauthnCredentials(ctx context.Context, user *model.User) error {
 	err := ur.DB.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// Delete webauthn credentials first (foreign key dependency)
 		_, err := tx.NewDelete().
@@ -136,4 +116,16 @@ func (ur *UserRepository) DeleteUserWithWebauthnCredentials(ctx context.Context,
 	})
 
 	return err
+}
+
+func (ur *UserRepository) FindUserIDByCredentialID(ctx context.Context, credentialID []byte) (*uuid.UUID, error) {
+	var credential model.WebauthnCredentials
+	err := ur.DB.NewSelect().
+		Model(&credential).
+		Column("user_id").
+		Where("credential_id = ?", credentialID).Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &credential.UserID, nil
 }

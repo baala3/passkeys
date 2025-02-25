@@ -11,7 +11,12 @@ export function PasswordLogin(): React.ReactElement {
   const [notification, setNotification] = useState("");
   const navigate = useNavigate();
   useEffect(() => {
-    passkeyAutofill(email, navigate, setNotification);
+    passkeyAutofill(
+      email,
+      "login",
+      () => navigate("/home"),
+      (errorMessage) => setNotification(errorMessage)
+    );
   }, []);
 
   async function loginUser() {

@@ -9,16 +9,15 @@ import {
 } from "@simplewebauthn/types";
 import { isValidEmail } from "../utils/shared";
 import { AuthResponse } from "../utils/types";
-import { NavigateFunction } from "react-router-dom";
 
 export async function registerPasskey(
   email: string,
   context: string = "none",
-  navigate: NavigateFunction,
-  setNotification: (notification: string) => void
+  onSuccessCallback: () => void,
+  onFailureCallback: (errorMessage: string) => void
 ) {
   if (context === "signup" && !isValidEmail(email)) {
-    setNotification("Please enter your email.");
+    onFailureCallback("Please enter your email.");
     return;
   }
 
@@ -36,7 +35,7 @@ export async function registerPasskey(
     } & AuthResponse = await response.json();
 
     if (credentialCreationOptions.status === "error") {
-      setNotification(credentialCreationOptions.errorMessage);
+      onFailureCallback(credentialCreationOptions.errorMessage);
       return;
     }
 
@@ -45,7 +44,7 @@ export async function registerPasskey(
     });
   } catch (error) {
     if (error instanceof Error) {
-      setNotification("An error occurred. Please try again.");
+      onFailureCallback("An error occurred. Please try again.");
     }
     return;
   }
@@ -62,28 +61,24 @@ export async function registerPasskey(
   const verificationJSON: AuthResponse = await verificationResponse.json();
 
   if (verificationJSON.status === "ok") {
-    setNotification("Successfully registered.");
-    if (context === "signup") {
-      navigate("/home");
-    } else {
-      window.location.reload();
-    }
+    onSuccessCallback();
   } else {
-    setNotification("Registration failed.");
+    onFailureCallback("Registration failed.");
   }
 }
 
 export async function loginPasskey(
   email: string,
-  navigate: NavigateFunction,
-  setNotification: (notification: string) => void
+  context: string = "none",
+  onSuccessCallback: () => void,
+  onFailureCallback: (errorMessage: string) => void
 ) {
   if (!isValidEmail(email)) {
-    setNotification("Please enter your email.");
+    onFailureCallback("Please enter your email.");
     return;
   }
 
-  const response = await fetch(`/login/begin`, {
+  const response = await fetch(`/login/begin?context=${context}`, {
     method: "POST",
     body: JSON.stringify({ email }),
     headers: {
@@ -102,18 +97,20 @@ export async function loginPasskey(
     if (error instanceof Error) {
       switch (error.name) {
         case "TypeError":
-          setNotification("There is no passkey associated with this account.");
+          onFailureCallback(
+            "There is no passkey associated with this account."
+          );
           break;
         case "AbortError":
           break;
         default:
-          setNotification("An error occurred. Please try again.");
+          onFailureCallback("An error occurred. Please try again.");
       }
     }
     return;
   }
 
-  const verificationResponse = await fetch(`/login/finish`, {
+  const verificationResponse = await fetch(`/login/finish?context=${context}`, {
     method: "POST",
     body: JSON.stringify(assertion),
     headers: {
@@ -123,19 +120,19 @@ export async function loginPasskey(
 
   const verificationJSON: AuthResponse = await verificationResponse.json();
   if (verificationJSON.status === "ok") {
-    setNotification("Successfully logged in.");
-    navigate("/home");
+    onSuccessCallback();
   } else {
-    setNotification("Login failed.");
+    onFailureCallback("Login failed.");
   }
 }
 
 export async function passkeyAutofill(
   email: string,
-  navigate: NavigateFunction,
-  setNotification: (notification: string) => void
+  context: string = "none",
+  onSuccessCallback: () => void,
+  onFailureCallback: (errorMessage: string) => void
 ) {
-  const response = await fetch(`/discoverable_login/begin`, {
+  const response = await fetch(`/discoverable_login/begin?context=${context}`, {
     method: "POST",
     body: JSON.stringify({ email }),
     headers: {
@@ -155,36 +152,43 @@ export async function passkeyAutofill(
     if (error instanceof Error) {
       switch (error.name) {
         case "TypeError":
-          setNotification("An account with that email does not exist.");
+          onFailureCallback("An account with that email does not exist.");
           break;
         case "AbortError":
           break;
         default:
-          setNotification("An error occurred. Please try again.");
+          onFailureCallback("An error occurred. Please try again.");
       }
     }
     return;
   }
 
-  const verificationResponse = await fetch(`/discoverable_login/finish`, {
-    method: "POST",
-    body: JSON.stringify(assertion),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  const verificationResponse = await fetch(
+    `/discoverable_login/finish?context=${context}`,
+    {
+      method: "POST",
+      body: JSON.stringify(assertion),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
 
   const verificationJSON: AuthResponse = await verificationResponse.json();
   if (verificationJSON.status === "ok") {
-    setNotification("Successfully logged in.");
-    navigate("/home");
+    onSuccessCallback();
   } else {
-    setNotification("Login failed.");
+    onFailureCallback("Login failed.");
   }
 }
 
-export async function deletePasskey(credentialId: string) {
-  const response = await fetch(`/credentials`, {
+export async function deletePasskey(
+  credentialId: string,
+  context: string = "none",
+  onSuccessCallback: () => void,
+  onFailureCallback: (errorMessage: string) => void
+) {
+  const response = await fetch(`/credentials?context=${context}`, {
     method: "DELETE",
     body: JSON.stringify({ credentialId: credentialId }),
     headers: {
@@ -192,6 +196,8 @@ export async function deletePasskey(credentialId: string) {
     },
   });
   if (response.ok) {
-    window.location.reload();
+    onSuccessCallback();
+  } else {
+    onFailureCallback("Failed to delete passkey.");
   }
 }

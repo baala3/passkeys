@@ -96,7 +96,7 @@ func (pc PasswordController) Logout() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		cookie, err := ctx.Cookie("auth")
 		if err != nil {
-			return pkg.SendError(ctx, errors.New("Not logged in."), http.StatusUnauthorized)
+			return pkg.SendError(ctx, errors.New("Failed to get session data."), http.StatusInternalServerError)
 		}
 
 		sessionID := cookie.Value
@@ -110,7 +110,7 @@ func (pc PasswordController) DeleteAccount() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		cookie, err := ctx.Cookie("auth")
 		if err != nil {
-			return pkg.SendError(ctx, errors.New("Not logged in."), http.StatusUnauthorized)
+			return pkg.SendError(ctx, errors.New("Failed to get session data."), http.StatusInternalServerError)
 		}
 		sessionID := cookie.Value
 		pc.UserSession.Delete(ctx, sessionID)
@@ -119,7 +119,7 @@ func (pc PasswordController) DeleteAccount() echo.HandlerFunc {
 		if user == nil {
 			return pkg.SendError(ctx, errors.New("User not found"), http.StatusNotFound)
 		}
-		err = pc.UserRepository.DeleteUserWithWebauthnCredentials(ctx.Request().Context(), user)
+		err = pc.UserRepository.DeleteUser(ctx.Request().Context(), user)
 		if err != nil {
 			return pkg.SendError(ctx, err, http.StatusInternalServerError)
 		}
