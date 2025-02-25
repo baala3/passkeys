@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Layout } from "../components/layout/Layout.tsx";
 import { Button } from "../components/input/Button.tsx";
 import { Heading } from "../components/layout/Heading.tsx";
+import { loginPasskey } from "../hooks/webauth_api.tsx";
 
 export default function DeleteAccount(): React.ReactElement {
   const [confirm, setConfirm] = useState(false);
@@ -13,10 +14,17 @@ export default function DeleteAccount(): React.ReactElement {
       return;
     }
 
-    await fetch("/delete_account", {
-      method: "DELETE",
-    });
-    window.location.reload();
+    loginPasskey(
+      "",
+      "delete_account",
+      async () => {
+        await fetch("/delete_account", {
+          method: "DELETE",
+        });
+        window.location.reload();
+      },
+      (errorMessage) => setNotification(errorMessage)
+    );
   }
 
   return (

@@ -12,8 +12,8 @@ export function PasskeyLogin(): React.ReactElement {
   async function handleLoginPasskey() {
     await loginPasskey(
       email,
-      "login",
-      () => navigate("/home"),
+      "signin",
+      async () => navigate("/home"),
       (errorMessage) => setNotification(errorMessage)
     );
   }

@@ -70,10 +70,10 @@ export async function registerPasskey(
 export async function loginPasskey(
   email: string,
   context: string = "none",
-  onSuccessCallback: () => void,
+  onSuccessCallback: () => Promise<void>,
   onFailureCallback: (errorMessage: string) => void
 ) {
-  if (!isValidEmail(email)) {
+  if (context === "signin" && !isValidEmail(email)) {
     onFailureCallback("Please enter your email.");
     return;
   }

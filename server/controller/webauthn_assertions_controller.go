@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/baala3/passkeys/concerns"
+	"github.com/baala3/passkeys/model"
 	"github.com/baala3/passkeys/pkg"
 	"github.com/baala3/passkeys/repository"
 	"github.com/go-webauthn/webauthn/protocol"
@@ -117,19 +119,9 @@ func (pc *WebAuthnAssertionsController) FinishDiscoverableLogin() echo.HandlerFu
 }
 
 func (pc *WebAuthnAssertionsController) getCredentialAssertion(ctx echo.Context) (*protocol.CredentialAssertion, *webauthn.SessionData, error) {
-	var p pkg.Params
-	if err := ctx.Bind(&p); err != nil {
-		return nil, nil, err
-	}
-
-	user, err := pc.UserRepository.FindUserByEmail(ctx.Request().Context(), p.Email)
-
+	user, err, _ := pc.getContextBasedUser(ctx)
 	if err != nil {
 		return nil, nil, err
-	}
-
-	if user == nil {
-		return nil, nil, errors.New("User does not exist")
 	}
 
 	return pc.WebAuthnAPI.BeginLogin(user, webauthn.WithUserVerification(protocol.VerificationRequired))
@@ -153,4 +145,35 @@ func (pc *WebAuthnAssertionsController) getDiscoverableCredential(ctx echo.Conte
 		func(rawId []byte, userID []byte) (user webauthn.User, err error) {
 			return pc.UserRepository.FindUserById(ctx.Request().Context(), userID)
 		}, *sessionData, ctx.Request())
+}
+
+
+func (pc *WebAuthnAssertionsController) getContextBasedUser(ctx echo.Context) (user *model.User, err error, status int) {
+	context := ctx.QueryParam("context")
+
+	switch context {
+	case "signin":
+		var p pkg.Params
+		if err := ctx.Bind(&p); err != nil {
+			return nil, err, http.StatusBadRequest
+		}
+		user, err := pc.UserRepository.FindUserByEmail(ctx.Request().Context(), p.Email)
+
+		if err != nil {
+			return nil, err, http.StatusBadRequest
+		}
+
+		if user == nil {
+			return nil, errors.New("User does not exist"), http.StatusBadRequest
+		}
+		return user, nil, http.StatusOK
+	case "delete_account":
+		user = concerns.CurrentUser(ctx, pc.UserRepository)
+		if user == nil {
+			return nil, errors.New("user not found"), http.StatusUnauthorized
+		}
+		return user, nil, http.StatusOK
+	default:
+		return nil, errors.New("invalid context"), http.StatusBadRequest
+	}
 }

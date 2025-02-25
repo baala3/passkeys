@@ -1,8 +1,8 @@
 import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import Login from "./pages/login.tsx";
-import Register from "./pages/register.tsx";
-import Homepage from "./pages/homepage.tsx";
+import Login from "./pages/Login.tsx";
+import Register from "./pages/Register.tsx";
+import Homepage from "./pages/Homepage.tsx";
 import ManagePasskeys from "./pages/ManagePasskeys.tsx";
 import DeleteAccount from "./pages/DeleteAccount.tsx";
 

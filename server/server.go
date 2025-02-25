@@ -43,8 +43,8 @@ func (s *Server) registerEndpoints() {
 	s.router.GET("/credentials", s.webauthnCredentialController.GetCredentials(), middleware.Auth)
 	s.router.DELETE("/credentials", s.webauthnCredentialController.DeleteCredential(), middleware.Auth)
 
-	s.router.POST("/login/begin", s.webauthnAssertionsController.BeginLogin(), middleware.NoAuth)
-	s.router.POST("/login/finish", s.webauthnAssertionsController.FinishLogin(), middleware.NoAuth)
+	s.router.POST("/login/begin", s.webauthnAssertionsController.BeginLogin(), middleware.ConditionalAuth)
+	s.router.POST("/login/finish", s.webauthnAssertionsController.FinishLogin(), middleware.ConditionalAuth)
 	s.router.POST("/discoverable_login/begin", s.webauthnAssertionsController.BeginDiscoverableLogin(), middleware.NoAuth)
 	s.router.POST("/discoverable_login/finish", s.webauthnAssertionsController.FinishDiscoverableLogin(), middleware.NoAuth)
 

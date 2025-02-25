@@ -14,7 +14,7 @@ func ConditionalAuth(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		context := c.QueryParam("context")
 		switch context {
-		case "signup":
+		case "signup", "signin":
 			return next(c)
 		default:
 			return Auth(next)(c)
