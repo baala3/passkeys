@@ -126,3 +126,35 @@ func (pc PasswordController) DeleteAccount() echo.HandlerFunc {
 		return pkg.SendOK(ctx)
 	}
 }
+
+func (pc PasswordController) ChangePassword() echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		var p struct {
+			Password string
+		}
+		if err := ctx.Bind(&p); err != nil {
+			return pkg.SendError(ctx, err, http.StatusBadRequest)
+		}
+
+		user := concerns.CurrentUser(ctx, pc.UserRepository)
+		if user == nil {
+			return pkg.SendError(ctx, errors.New("User not found"), http.StatusNotFound)
+		}
+
+		if len(p.Password) < 8 {
+			return pkg.SendError(ctx, errors.New("Password must be at least 8 characters"), http.StatusBadRequest)
+		}
+		
+		passwordHash, err := argon2id.CreateHash(p.Password, argon2id.DefaultParams)
+		if err != nil {
+			return pkg.SendError(ctx, err, http.StatusInternalServerError)
+		}
+
+		user.PasswordHash = passwordHash
+		err = pc.UserRepository.UpdateUser(ctx.Request().Context(), user)
+		if err != nil {
+			return pkg.SendError(ctx, err, http.StatusInternalServerError)
+		}
+		return pkg.SendOK(ctx)
+	}
+}

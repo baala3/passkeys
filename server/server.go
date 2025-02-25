@@ -40,6 +40,7 @@ func (s *Server) registerEndpoints() {
 	s.router.FileFS("/passkeys", "index.html", distIndexHTML, middleware.Auth)
 	s.router.FileFS("/delete_account", "index.html", distIndexHTML, middleware.Auth)
 	s.router.FileFS("/edit_email", "index.html", distIndexHTML, middleware.Auth)
+	s.router.FileFS("/edit_password", "index.html", distIndexHTML, middleware.Auth)
 
 	s.router.POST("/register/begin", s.webauthnCredentialController.BeginRegistration(), middleware.ConditionalAuth)
 	s.router.POST("/register/finish", s.webauthnCredentialController.FinishRegistration(), middleware.ConditionalAuth)
@@ -56,4 +57,5 @@ func (s *Server) registerEndpoints() {
 	s.router.POST("/logout", s.passwordController.Logout(), middleware.Auth)
 	s.router.DELETE("/delete_account", s.passwordController.DeleteAccount(), middleware.Auth)
 	s.router.POST("/change_email", s.emailController.ChangeEmail(), middleware.Auth)
+	s.router.POST("/change_password", s.passwordController.ChangePassword(), middleware.Auth)
 }
