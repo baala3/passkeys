@@ -50,11 +50,16 @@ func NewServer() (*Server, error) {
 		UserRepository: userRepository,
 		UserSession:    userSession,
 	}
+	emailController := controller.EmailController{
+		UserRepository: userRepository,
+		UserSession:    userSession,
+	}
 	server := &Server{
 		router:                       echoEcho,
 		webauthnAssertionsController: webAuthnAssertionsController,
 		webauthnCredentialController: webAuthnCredentialController,
 		passwordController:           passwordController,
+		emailController:              emailController,
 	}
 	return server, nil
 }

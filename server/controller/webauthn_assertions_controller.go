@@ -167,7 +167,7 @@ func (pc *WebAuthnAssertionsController) getContextBasedUser(ctx echo.Context) (u
 			return nil, errors.New("User does not exist"), http.StatusBadRequest
 		}
 		return user, nil, http.StatusOK
-	case "delete_account":
+	case "delete_account", "email_change":
 		user = concerns.CurrentUser(ctx, pc.UserRepository)
 		if user == nil {
 			return nil, errors.New("user not found"), http.StatusUnauthorized

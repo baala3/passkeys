@@ -4,7 +4,7 @@ import { MenuItem } from "../components/navigation/MenuItem.tsx";
 import { Button } from "../components/input/Button.tsx";
 
 const MenuItems = [
-  { title: "Change email address", link: "#" },
+  { title: "Change email address", link: "/edit_email" },
   { title: "Change password", link: "#" },
   { title: "Set up Two-Step Authentication", link: "#" },
   { title: "Manage Passkeys", link: "/passkeys" },

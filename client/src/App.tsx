@@ -5,6 +5,7 @@ import Register from "./pages/Register.tsx";
 import Homepage from "./pages/Homepage.tsx";
 import ManagePasskeys from "./pages/ManagePasskeys.tsx";
 import DeleteAccount from "./pages/DeleteAccount.tsx";
+import EditEmail from "./pages/EditEmail.tsx";
 
 function App(): React.ReactElement {
   return (
@@ -15,6 +16,7 @@ function App(): React.ReactElement {
         <Route path="/home" element={<Homepage />} />
         <Route path="/passkeys" element={<ManagePasskeys />} />
         <Route path="/delete_account" element={<DeleteAccount />} />
+        <Route path="/edit_email" element={<EditEmail />} />
       </Routes>
     </Router>
   );

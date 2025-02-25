@@ -13,6 +13,7 @@ type Server struct {
 	webauthnAssertionsController controller.WebAuthnAssertionsController
 	webauthnCredentialController controller.WebAuthnCredentialController
 	passwordController controller.PasswordController
+	emailController controller.EmailController
 }
 
 func (s *Server) Start() {
@@ -38,6 +39,8 @@ func (s *Server) registerEndpoints() {
 	s.router.FileFS("/home", "index.html", distIndexHTML, middleware.Auth)
 	s.router.FileFS("/passkeys", "index.html", distIndexHTML, middleware.Auth)
 	s.router.FileFS("/delete_account", "index.html", distIndexHTML, middleware.Auth)
+	s.router.FileFS("/edit_email", "index.html", distIndexHTML, middleware.Auth)
+
 	s.router.POST("/register/begin", s.webauthnCredentialController.BeginRegistration(), middleware.ConditionalAuth)
 	s.router.POST("/register/finish", s.webauthnCredentialController.FinishRegistration(), middleware.ConditionalAuth)
 	s.router.GET("/credentials", s.webauthnCredentialController.GetCredentials(), middleware.Auth)
@@ -52,4 +55,5 @@ func (s *Server) registerEndpoints() {
 	s.router.POST("/login/password", s.passwordController.Login(), middleware.NoAuth)
 	s.router.POST("/logout", s.passwordController.Logout(), middleware.Auth)
 	s.router.DELETE("/delete_account", s.passwordController.DeleteAccount(), middleware.Auth)
+	s.router.POST("/change_email", s.emailController.ChangeEmail(), middleware.Auth)
 }

@@ -129,3 +129,11 @@ func (ur *UserRepository) FindUserIDByCredentialID(ctx context.Context, credenti
 	}
 	return &credential.UserID, nil
 }
+
+func (ur *UserRepository) UpdateUser(ctx context.Context, user *model.User) error {
+	_, err := ur.DB.NewUpdate().
+		Model(user).
+		WherePK().
+		Exec(ctx)
+	return err
+}
