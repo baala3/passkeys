@@ -3,6 +3,8 @@ import { Button } from "../input/Button";
 import { Input } from "../input/Input";
 import { registerPasskey } from "../../hooks/webauth_api";
 import { useNavigate } from "react-router-dom";
+import { Notification } from "../layout/Notification";
+import { SubHeading } from "../layout/SubHeading";
 
 export function PasskeySignUp(): React.ReactElement {
   const [email, setEmail] = useState("");
@@ -20,14 +22,10 @@ export function PasskeySignUp(): React.ReactElement {
 
   return (
     <>
-      <h2 className="text-center text-xl font-bold leading-9 tracking-tight text-gray-900">
-        Create a new account with passkey
-      </h2>
+      <SubHeading>Create a new account with passkey</SubHeading>
 
       <div className="space-y-6">
-        <div className="text-sm text-center min-h-8 font-normal text-blue-400">
-          {notification}
-        </div>
+        <Notification notification={notification} />
 
         <Input
           type="email"

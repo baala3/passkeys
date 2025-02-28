@@ -4,6 +4,8 @@ import { Input } from "../input/Input";
 import { isValidEmail } from "../../utils/shared";
 import { AuthResponse } from "../../utils/types";
 import { useNavigate } from "react-router-dom";
+import { Notification } from "../layout/Notification";
+import { SubHeading } from "../layout/SubHeading";
 
 export function PasswordSignUp(): React.ReactElement {
   const [email, setEmail] = useState("");
@@ -41,13 +43,9 @@ export function PasswordSignUp(): React.ReactElement {
 
   return (
     <>
-      <h2 className="text-center text-xl font-bold leading-9 tracking-tight text-gray-900">
-        Sign up using a password
-      </h2>
+      <SubHeading>Sign up using a password</SubHeading>
       <div className="space-y-6">
-        <div className="text-sm text-center min-h-8 font-normal text-blue-400">
-          {notification}
-        </div>
+        <Notification notification={notification} />
         <Input
           type="email"
           placeholder="Email"

@@ -17,7 +17,7 @@ export async function registerPasskey(
   onFailureCallback: (errorMessage: string) => void
 ) {
   if (context === "signup" && !isValidEmail(email)) {
-    onFailureCallback("Please enter your email.");
+    onFailureCallback("Please enter a valid email address.");
     return;
   }
 
@@ -74,7 +74,7 @@ export async function loginPasskey(
   onFailureCallback: (errorMessage: string) => void
 ) {
   if (context === "signin" && !isValidEmail(email)) {
-    onFailureCallback("Please enter your email.");
+    onFailureCallback("Please enter a valid email address.");
     return;
   }
 

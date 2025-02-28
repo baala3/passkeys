@@ -7,6 +7,8 @@ import { HorizontalLine } from "../components/layout/HorizontalLine";
 import { Passkey } from "../utils/types";
 import { registerPasskey, deletePasskey } from "../hooks/webauth_api";
 import { formatDate } from "../utils/shared";
+import { Notification } from "../components/layout/Notification";
+
 export default function ManagePasskeys(): React.ReactElement {
   const [registeredPasskeys, setRegisteredPasskeys] = useState<Passkey[]>([]);
   const [notification, setNotification] = useState("");
@@ -42,9 +44,7 @@ export default function ManagePasskeys(): React.ReactElement {
   return (
     <Layout>
       <Heading>Manage Passkeys</Heading>
-      <div className="text-sm text-center font-normal text-blue-400 mb-4">
-        {notification}
-      </div>
+      <Notification notification={notification} />
       <Button
         onClickFunc={handleRegisterPasskey}
         buttonText="Register a passkey"

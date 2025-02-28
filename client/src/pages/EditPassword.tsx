@@ -4,6 +4,7 @@ import { Heading } from "../components/layout/Heading";
 import { Input } from "../components/input/Input";
 import { Button } from "../components/input/Button";
 import { loginPasskey } from "../hooks/webauth_api";
+import { Notification } from "../components/layout/Notification";
 
 export default function EditPassword(): React.ReactElement {
   const [newPassword, setNewPassword] = useState("");
@@ -38,9 +39,7 @@ export default function EditPassword(): React.ReactElement {
 
   return (
     <Layout>
-      <div className="text-sm text-center font-normal text-blue-400 mb-4">
-        {notification}
-      </div>
+      <Notification notification={notification} />
       <Heading>Edit Password</Heading>
       <p className="text-sm text-center font-normal text-gray-500 mb-4">
         Confirm that you have passkey to change your password.

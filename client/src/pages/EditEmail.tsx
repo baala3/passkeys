@@ -5,6 +5,8 @@ import { Input } from "../components/input/Input";
 import { Button } from "../components/input/Button";
 import { isValidEmail } from "../utils/shared";
 import { loginPasskey } from "../hooks/webauth_api";
+import { Notification } from "../components/layout/Notification";
+
 export default function EditEmail(): React.ReactElement {
   const [newEmail, setNewEmail] = useState("");
   const [notification, setNotification] = useState("");
@@ -38,9 +40,7 @@ export default function EditEmail(): React.ReactElement {
 
   return (
     <Layout>
-      <div className="text-sm text-center font-normal text-blue-400 mb-4">
-        {notification}
-      </div>
+      <Notification notification={notification} />
       <Heading>Edit Email</Heading>
       <p className="text-sm text-center font-normal text-gray-500 mb-4">
         Confirm that you have passkey to change your email.
