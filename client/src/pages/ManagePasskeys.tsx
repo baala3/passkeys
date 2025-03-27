@@ -75,7 +75,7 @@ export default function ManagePasskeys(): React.ReactElement {
               <div className="flex justify-end">
                 <LinkButton
                   onClickFunc={() => handleDeletePasskey(passkey.credential_id)}
-                  buttonText="Delete"
+                  buttonText="delete"
                   className="text-red-500 hover:text-red-600"
                 />
               </div>

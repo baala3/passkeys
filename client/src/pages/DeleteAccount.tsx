@@ -4,6 +4,7 @@ import { Button } from "../components/input/Button.tsx";
 import { Heading } from "../components/layout/Heading.tsx";
 import { loginPasskey } from "../hooks/webauth_api.tsx";
 import { Notification } from "../components/layout/Notification";
+import { Checkbox } from "../components/input/Checkbox";
 
 export default function DeleteAccount(): React.ReactElement {
   const [confirm, setConfirm] = useState(false);
@@ -34,18 +35,18 @@ export default function DeleteAccount(): React.ReactElement {
 
       <Notification notification={notification} />
 
-      <div className="text-center text-base text-gray-500 flex items-center justify-center leading-6">
-        <input
-          type="checkbox"
-          className="mr-2 accent-[#027D9C]"
-          checked={confirm}
-          onChange={() => setConfirm(!confirm)}
-        />
-        <span>confirm that you have passkey to delete your account.</span>
-      </div>
+      <Checkbox
+        checked={confirm}
+        onChange={() => setConfirm(!confirm)}
+        label="confirm that you have passkey to delete your account."
+      />
 
       <br />
-      <Button buttonText="Delete Account" onClickFunc={handleDeleteAccount} />
+      <Button
+        buttonText="Delete Account"
+        onClickFunc={handleDeleteAccount}
+        className="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 hover:border-red-500/30 hover:shadow-red-500/10"
+      />
     </Layout>
   );
 }
