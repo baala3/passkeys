@@ -29,7 +29,7 @@ export function PasskeySignUp(): React.ReactElement {
 
         <Input
           type="email"
-          placeholder="Email"
+          placeholder="email"
           value={email}
           onChange={setEmail}
         />

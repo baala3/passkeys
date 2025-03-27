@@ -21,12 +21,23 @@ export default function Homepage(): React.ReactElement {
 
   return (
     <Layout>
-      <div className="mb-10">
-        {MenuItems.map((item) => (
-          <MenuItem title={item.title} link={item.link} />
+      <div className="space-y-3 mb-8">
+        {MenuItems.map((item, index) => (
+          <div
+            key={index}
+            className="group relative transition-all duration-200 hover:scale-[1.01]"
+          >
+            <MenuItem title={item.title} link={item.link} />
+          </div>
         ))}
       </div>
-      <Button onClickFunc={signOut} buttonText="Sign out" />
+      <div className="w-full">
+        <Button
+          onClickFunc={signOut}
+          buttonText="Sign out"
+          className="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 hover:border-red-500/30 hover:shadow-red-500/10"
+        />
+      </div>
     </Layout>
   );
 }

@@ -1,26 +1,20 @@
 import React from "react";
-import gopher from "../../assets/gopher.png";
 type Props = {
   children: React.ReactNode;
 };
 export function Layout({ children }: Props): React.ReactElement {
   return (
-    <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8 text-center font-normal mx-auto">
-      <div
-        className="w-full bg-[#027D9C] text-white p-4 fixed top-0 left-0 text-xl text-center cursor-pointer"
-        onClick={() => {
-          window.location.href = "/";
-        }}
-      >
-        Passkeys with go-webauthn
+    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl shadow-indigo-500/20 border border-white/30 p-8">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            passkeys with go-webauthn
+          </h1>
+          <div className="h-1 w-20 bg-gradient-to-r from-indigo-600/50 to-purple-600/50 rounded-full mx-auto mt-2"></div>
+          <p className="text-gray-600 mt-2">Try it out with the demo below</p>
+        </div>
+        {children}
       </div>
-      <div className="mt-20 sm:mx-auto sm:w-full sm:max-w-sm">{children}</div>
-      <img
-        src={gopher}
-        alt="gopher"
-        title="Go Gopher by Renée French"
-        className="fixed bottom-0 right-0 h-24 object-scale-down"
-      />
     </div>
   );
 }

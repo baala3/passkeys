@@ -1,5 +1,4 @@
 import React from "react";
-import { motion } from "framer-motion";
 
 type Props = {
   type: string;
@@ -11,11 +10,11 @@ type Props = {
 function autoComplete(type: string): string {
   switch (type) {
     case "email":
-      return "email webauthn";
+      return "email";
     case "password":
       return "current-password";
     default:
-      return "";
+      return "off";
   }
 }
 
@@ -26,27 +25,15 @@ export function Input({
   onChange,
 }: Props): React.ReactElement {
   return (
-    <motion.div
-      layout
-      whileHover={{ scale: 1.01 }}
-      whileTap={{ scale: 0.99 }}
-      transition={{
-        duration: 0.8,
-        ease: [0, 0.71, 0.2, 1.01],
-        layout: {
-          duration: 0.8,
-          ease: [0, 0.71, 0.2, 1.01],
-        },
-      }}
-    >
+    <div className="relative">
       <input
         type={type}
         placeholder={placeholder}
         autoComplete={autoComplete(type)}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="block w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+        className="block w-full rounded-lg border border-gray-200/100 bg-white/50 backdrop-blur-sm p-3 text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all duration-200 sm:text-sm sm:leading-6"
       />
-    </motion.div>
+    </div>
   );
 }

@@ -48,13 +48,13 @@ export function PasswordSignUp(): React.ReactElement {
         <Notification notification={notification} />
         <Input
           type="email"
-          placeholder="Email"
+          placeholder="email"
           value={email}
           onChange={setEmail}
         />
         <Input
           type="password"
-          placeholder="Password"
+          placeholder="password"
           value={password}
           onChange={setPassword}
         />
