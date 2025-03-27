@@ -39,7 +39,7 @@ export default function EditEmail(): React.ReactElement {
   }
 
   return (
-    <Layout>
+    <Layout parent="/home">
       <Notification notification={notification} />
       <Heading>Edit Email</Heading>
       <p className="text-sm text-center font-normal text-gray-500 mb-4">

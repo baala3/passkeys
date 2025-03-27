@@ -38,7 +38,7 @@ export default function EditPassword(): React.ReactElement {
   }
 
   return (
-    <Layout>
+    <Layout parent="/home">
       <Notification notification={notification} />
       <Heading>Edit Password</Heading>
       <p className="text-sm text-center font-normal text-gray-500 mb-4">

@@ -29,7 +29,7 @@ export default function DeleteAccount(): React.ReactElement {
   }
 
   return (
-    <Layout>
+    <Layout parent="/home">
       <Heading>Are you sure?</Heading>
 
       <Notification notification={notification} />

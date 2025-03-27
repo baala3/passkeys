@@ -42,7 +42,7 @@ export default function ManagePasskeys(): React.ReactElement {
   }
 
   return (
-    <Layout>
+    <Layout parent="/home">
       <div className="w-full max-w-sm">
         <Heading>Manage Passkeys</Heading>
         <Notification notification={notification} />
