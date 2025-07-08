@@ -2,18 +2,19 @@ services:
   client:
     build:
       dockerfile: Dockerfile
+      target: builder
+  server:
+    build:
+      dockerfile: Dockerfile
+      target: backend
     ports:
-      - 3000:3000
+      - 9044:9044
   redis:
     image: redis:latest
-    ports:
-      - 16379:6379
     volumes:
       - ./server/data/services/redis/:/data
   postgres:
     image: postgres:latest
-    ports:
-      - 15432:5432
     volumes:
       - ./server/data/services/postgres/:/var/lib/postgresql/data
     environment:
