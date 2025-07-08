@@ -12,6 +12,7 @@ WORKDIR /server
 COPY server/go.mod server/go.sum ./
 RUN go mod download
 COPY server/ ./
+COPY --from=builder /client/dist ./dist
 RUN go build -o main .
 COPY start.sh ./
 RUN chmod +x start.sh
