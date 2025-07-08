@@ -1,4 +1,9 @@
 services:
+  client:
+    build:
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
   redis:
     image: redis:latest
     ports:
