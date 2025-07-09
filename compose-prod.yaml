@@ -20,13 +20,12 @@ services:
       - DB_USER=myuser
       - DB_PASSWORD=mypassword
       - DB_NAME=mydb
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=redis:6379
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "9044"]
       interval: 30s
       timeout: 10s
       retries: 3
-
   redis:
     image: redis:latest
     volumes:
@@ -36,7 +35,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-
   postgres:
     image: postgres:latest
     volumes:

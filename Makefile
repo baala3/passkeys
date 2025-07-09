@@ -19,3 +19,6 @@ dump-db:
 
 wire:
 	cd server && wire
+
+prod:
+	docker compose -f compose-prod.yaml up
