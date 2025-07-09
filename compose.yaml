@@ -8,11 +8,35 @@ services:
       dockerfile: Dockerfile
       target: backend
     ports:
-      - 9044:9044
+      - "9044:9044"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=myuser
+      - DB_PASSWORD=mypassword
+      - DB_NAME=mydb
+      - REDIS_URL=redis://redis:6379
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "9044"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   redis:
     image: redis:latest
     volumes:
       - ./server/data/services/redis/:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   postgres:
     image: postgres:latest
     volumes:
@@ -21,3 +45,8 @@ services:
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
       POSTGRES_DB: mydb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myuser -d mydb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
