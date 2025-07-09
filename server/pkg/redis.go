@@ -1,12 +1,14 @@
 package pkg
 
 import (
+	"os"
+
 	"github.com/redis/go-redis/v9"
 )
 
 func GetRedisClient() *redis.Client {
 	redisClient := redis.NewClient(&redis.Options{
-		Addr:     "redis:6379",
+		Addr:     os.Getenv("REDIS_URL"),
 		Password: "",
 		DB:       0,
 	})

@@ -34,7 +34,7 @@ func setup() {
 	database = db.GetTestDB()
 	e = echo.New()
 	miniRedis = miniredis.NewMiniRedis()
-	err := miniRedis.StartAddr(":6379")
+	err := miniRedis.StartAddr(":16379")
 	if err != nil {
 		panic(err)
 	}
