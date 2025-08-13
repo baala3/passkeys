@@ -58,6 +58,7 @@ export function PasswordLogin(): React.ReactElement {
           placeholder="email or autofill"
           value={email}
           onChange={setEmail}
+          autoComplete="webauthn"
         />
         <Input
           type="password"

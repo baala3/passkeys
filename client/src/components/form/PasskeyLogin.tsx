@@ -32,6 +32,7 @@ export function PasskeyLogin(): React.ReactElement {
           placeholder="email"
           value={email}
           onChange={setEmail}
+          autoComplete="off"
         />
 
         <Button onClickFunc={handleLoginPasskey} buttonText="Sign in" />
