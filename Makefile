@@ -1,4 +1,5 @@
 install:
+	git submodule update --init --recursive
 	docker compose -f compose-dev.yaml up -d # spining up postgres and redis
 	sleep 2 # waiting for services to be ready
 	cd client && yarn install # installing frontend dependencies

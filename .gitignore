@@ -10,3 +10,4 @@ client/dist
 
 .tool-versions
 .vscode/
+.idea/
