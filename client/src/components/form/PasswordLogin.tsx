@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { AuthResponse } from "../../utils/types";
 import { Button } from "../input/Button";
 import { Input } from "../input/Input";
 import { useNavigate } from "react-router-dom";
-import { passkeyAutofill } from "../../hooks/webauth_api";
 import { Notification } from "../layout/Notification";
 import { SubHeading } from "../layout/SubHeading";
 
@@ -12,14 +11,6 @@ export function PasswordLogin(): React.ReactElement {
   const [password, setPassword] = useState("");
   const [notification, setNotification] = useState("");
   const navigate = useNavigate();
-  useEffect(() => {
-    passkeyAutofill(
-      email,
-      "login",
-      () => navigate("/home"),
-      (errorMessage) => setNotification(errorMessage)
-    );
-  }, []);
 
   async function loginUser() {
     if (email === "") {
@@ -55,10 +46,9 @@ export function PasswordLogin(): React.ReactElement {
         <Notification notification={notification} />
         <Input
           type="email"
-          placeholder="email or autofill"
+          placeholder="email"
           value={email}
           onChange={setEmail}
-          autoComplete="webauthn"
         />
         <Input
           type="password"
